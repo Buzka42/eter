@@ -120,7 +120,11 @@ class _TimelineSparklineState extends ConsumerState<TimelineSparkline> {
       children: [
         InkWell(
           onTap: () => setState(() => _expanded = !_expanded),
-          child: Padding(
+          // A caps label plus an 18 px chevron is a ~34 px row; disclosure is
+          // a control and gets the 48 px minimum (§5.14).
+          child: Container(
+            constraints: const BoxConstraints(minHeight: 48),
+            alignment: Alignment.centerLeft,
             padding: const EdgeInsets.symmetric(vertical: EterSpace.s8),
             child: Row(
               children: [

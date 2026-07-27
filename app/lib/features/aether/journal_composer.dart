@@ -170,7 +170,9 @@ class _JournalComposerState extends ConsumerState<JournalComposer> {
         InkWell(
           onTap: () => setState(() => _expanded = !_expanded),
           borderRadius: BorderRadius.circular(EterSpace.s12),
-          child: Padding(
+          child: Container(
+            constraints: const BoxConstraints(minHeight: 48),
+            alignment: Alignment.centerLeft,
             padding: const EdgeInsets.symmetric(vertical: EterSpace.s8),
             child: Row(
               children: [
@@ -204,7 +206,9 @@ class _JournalComposerState extends ConsumerState<JournalComposer> {
               // as the only clue to what the field understands.
               ? InkWell(
                   onTap: () => setState(() => _expanded = true),
-                  child: Padding(
+                  child: Container(
+                    constraints: const BoxConstraints(minHeight: 48),
+                    alignment: Alignment.centerLeft,
                     padding: const EdgeInsets.only(bottom: EterSpace.s8),
                     child: Text(
                       'I had oats, walked for half an hour, and felt…',

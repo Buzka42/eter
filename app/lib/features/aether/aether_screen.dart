@@ -709,7 +709,7 @@ class _Dashboard extends ConsumerWidget {
             const SizedBox(height: EterSpace.s32),
             const JournalComposer(),
             const SizedBox(height: EterSpace.s48),
-            _SectionHeader(label: 'The day in numbers'),
+            const _SectionHeader(label: 'The day in numbers'),
             const SizedBox(height: EterSpace.s24),
             Row(
               children: [
@@ -718,7 +718,7 @@ class _Dashboard extends ConsumerWidget {
                   label: 'Eaten',
                   unit: 'kcal',
                 ),
-                _FigureDivider(),
+                const _FigureDivider(),
                 _Figure(
                   value: burned,
                   label: 'Burned',
@@ -731,7 +731,7 @@ class _Dashboard extends ConsumerWidget {
                       ? element.accentFor(Theme.of(context).brightness)
                       : null,
                 ),
-                _FigureDivider(),
+                const _FigureDivider(),
                 _Figure(
                   value: day.steps.toDouble(),
                   label: 'Steps',
@@ -751,7 +751,7 @@ class _Dashboard extends ConsumerWidget {
             const TimelineSparkline(),
             if (patterns.isNotEmpty) ...[
               const SizedBox(height: EterSpace.s48),
-              _SectionHeader(label: 'What Aether has noticed'),
+              const _SectionHeader(label: 'What Aether has noticed'),
               const SizedBox(height: EterSpace.s16),
               for (final pattern in patterns.take(3))
                 Padding(

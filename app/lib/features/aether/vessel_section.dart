@@ -75,7 +75,9 @@ class _VesselSectionState extends ConsumerState<VesselSection> {
         children: [
           InkWell(
             onTap: () => _toggle(profile),
-            child: Padding(
+            child: Container(
+              constraints: const BoxConstraints(minHeight: 48),
+              alignment: Alignment.centerLeft,
               padding: const EdgeInsets.symmetric(vertical: EterSpace.s8),
               child: Row(
                 children: [

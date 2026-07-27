@@ -146,6 +146,7 @@ void main() {
     bool seed = true,
     bool settle = false,
     DateTime? now,
+    bool reduceMotion = false,
   }) async {
     // Mirrors app.dart: the register is installed at the root from the
     // profile's guidance mode, and every surface reads its ornament level
@@ -182,9 +183,14 @@ void main() {
                   : ThemeMode.light,
               // The production shell provides the Scaffold/Material ancestor;
               // the atlas mirrors that context.
-              home: EterRegisterScope(
-                register: register,
-                child: Scaffold(body: screen),
+              home: MediaQuery(
+                // Calm Mode is the OS "remove animations" setting; the atlas
+                // can assert it the same way the platform delivers it.
+                data: MediaQueryData(disableAnimations: reduceMotion),
+                child: EterRegisterScope(
+                  register: register,
+                  child: Scaffold(body: screen),
+                ),
               ),
             ),
           );
@@ -270,6 +276,20 @@ void main() {
       'aether_immersive',
       AetherScreen(onOpenFeatures: () {}),
       profile: fixtureProfile(mode: GuidanceMode.immersive),
+    );
+  });
+
+  // Calm Mode has no golden of its own, so nothing stops a new loop from
+  // being added without a reduce-motion path. The Vessel is the densest
+  // motion surface in the app — two arcana loops side by side — so it is the
+  // one worth pinning.
+  testWidgets('atlas: vessel (reduce motion)', (tester) async {
+    await capture(
+      tester,
+      'vessel_reduce_motion',
+      inGutter(const VesselSection(initiallyExpanded: true)),
+      profile: fixtureProfile(),
+      reduceMotion: true,
     );
   });
 
