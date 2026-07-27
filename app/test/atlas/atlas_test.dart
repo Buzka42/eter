@@ -343,6 +343,7 @@ void main() {
       inGutter(const JournalComposer(
         initiallyExpanded: true,
         initialMessage: 'Added to today.',
+        initialEntryId: 1,
         initialExtraction: JournalExtraction(
           model: 'atlas-fixture',
           schemaVersion: 1,

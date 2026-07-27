@@ -360,6 +360,55 @@ class AppDatabase extends _$AppDatabase {
             ..limit(limit))
           .get();
 
+  /// Removes the rows a classified journal entry wrote.
+  ///
+  /// Only rows this entry created are touched: nutrition is matched on the
+  /// `journalEntryId` its metadata already carried, activity on the bucket
+  /// sources the caller derives from the same extraction, and lifestyle on
+  /// `source = 'journal'` at the entry's own timestamp. Anything the user
+  /// recorded by hand is left alone.
+  ///
+  /// Returns the number of rows deleted, so a caller can tell a real revert
+  /// from a no-op.
+  Future<int> revertJournalEntryRows({
+    required int entryId,
+    required DateTime createdAt,
+    required Iterable<String> activitySources,
+  }) async {
+    var removed = 0;
+    final meals = await (select(nutritionEntries)
+          ..where((row) => row.source.equals('journal')))
+        .get();
+    final ids = <int>[];
+    for (final row in meals) {
+      Object? decoded;
+      try {
+        decoded = jsonDecode(row.metadataJson);
+      } on FormatException {
+        continue;
+      }
+      if (decoded is Map && decoded['journalEntryId'] == entryId) {
+        ids.add(row.id);
+      }
+    }
+    if (ids.isNotEmpty) {
+      removed += await (delete(nutritionEntries)
+            ..where((row) => row.id.isIn(ids)))
+          .go();
+    }
+    final sources = activitySources.toList();
+    if (sources.isNotEmpty) {
+      removed += await (delete(rawBuckets)
+            ..where((row) => row.source.isIn(sources)))
+          .go();
+    }
+    removed += await (delete(lifestyleEntries)
+          ..where((row) =>
+              row.source.equals('journal') & row.recordedAt.equals(createdAt)))
+        .go();
+    return removed;
+  }
+
   Future<void> saveJournalExtraction({
     required int id,
     required String status,

@@ -64,6 +64,50 @@ class JournalService {
     }
   }
 
+  /// Undoes a reading the user says is wrong.
+  ///
+  /// Removes every row the extraction wrote and recomputes the day, then
+  /// marks the entry `discarded` rather than `pending` so the retry loop
+  /// cannot quietly apply the same wrong reading again. The prose itself is
+  /// kept: the user is rejecting the interpretation, not their own writing.
+  Future<void> undo({
+    required int entryId,
+    required DateTime createdAt,
+    required JournalExtraction extraction,
+  }) async {
+    final sources = <String>[
+      for (final segment in extraction.segments)
+        if (segment is ActivityJournalSegment)
+          ManualActivityService.sourceIdFor(
+            name: segment.name,
+            startUtc: ManualActivityService.startUtcFor(
+              endedAt: createdAt,
+              durationMinutes: segment.durationMinutes,
+            ),
+          ),
+    ];
+    await database.transaction(() async {
+      await database.revertJournalEntryRows(
+        entryId: entryId,
+        createdAt: createdAt,
+        activitySources: sources,
+      );
+      await database.saveJournalExtraction(id: entryId, status: 'discarded');
+    });
+    // Deleting raw buckets does not by itself change the winning minute or the
+    // day total, so both are rebuilt for the affected day.
+    final localDay = DateTime(createdAt.year, createdAt.month, createdAt.day);
+    final dayStartUtc = localDay.toUtc();
+    final active = await database.recomputeMinuteWinners(
+      dayStartUtc,
+      localDay.add(const Duration(days: 1)).toUtc(),
+    );
+    await database.recordDayTotal(
+      date: dayStartUtc.toIso8601String().substring(0, 10),
+      activeKcal: active,
+    );
+  }
+
   Future<int> retryPending({
     required Profile profile,
     String locale = 'en',

@@ -41,12 +41,7 @@ class ManualActivityService {
     final endMinuteUtc = _floorMinute(end.toUtc());
     final startUtc = endMinuteUtc.subtract(Duration(minutes: durationMinutes));
     final kcalPerMinute = activeKcal / durationMinutes;
-    final safeName = name
-        .toLowerCase()
-        .replaceAll(RegExp('[^a-z0-9]+'), '-')
-        .replaceAll(RegExp('(^-|-\$)'), '');
-    final sourceId =
-        'journal-${safeName.isEmpty ? 'activity' : safeName}-${startUtc.microsecondsSinceEpoch}';
+    final sourceId = sourceIdFor(name: name, startUtc: startUtc);
 
     await database.ingestRawBuckets(List.generate(
       durationMinutes,
@@ -72,6 +67,37 @@ class ManualActivityService {
       newMilestones: update.newMilestones,
     );
   }
+
+  /// The bucket source written for a logged activity.
+  ///
+  /// Deliberately derivable rather than stored: undoing a journal reading has
+  /// to find the very rows that reading created, and recomputing the id from
+  /// the same inputs keeps the two sides from drifting apart.
+  static String sourceIdFor({required String name, required DateTime startUtc}) {
+    final safeName = name
+        .toLowerCase()
+        .replaceAll(RegExp('[^a-z0-9]+'), '-')
+        .replaceAll(RegExp('(^-|-\$)'), '');
+    return 'journal-${safeName.isEmpty ? 'activity' : safeName}'
+        '-${startUtc.microsecondsSinceEpoch}';
+  }
+
+  /// The first minute an activity of [durationMinutes] ending at [endedAt]
+  /// occupies. Shared with [log] so undo lands on the same bucket range.
+  static DateTime startUtcFor({
+    required DateTime endedAt,
+    required int durationMinutes,
+  }) =>
+      _floorMinuteUtc(endedAt.toUtc())
+          .subtract(Duration(minutes: durationMinutes));
+
+  static DateTime _floorMinuteUtc(DateTime value) => DateTime.utc(
+        value.year,
+        value.month,
+        value.day,
+        value.hour,
+        value.minute,
+      );
 
   DateTime _floorMinute(DateTime value) => DateTime.utc(
         value.year,

@@ -19,6 +19,7 @@ class JournalComposer extends ConsumerStatefulWidget {
     this.initialText = '',
     this.initialMessage,
     this.initialExtraction,
+    this.initialEntryId,
   });
 
   final bool initiallyExpanded;
@@ -28,6 +29,10 @@ class JournalComposer extends ConsumerStatefulWidget {
   /// Seeds the post-submit reading, so the atlas can capture the state the
   /// user sees after an entry is classified.
   final JournalExtraction? initialExtraction;
+
+  /// Seeds the entry behind that reading, so the atlas can also capture the
+  /// undo affordance rather than leaving it unscreenshotted.
+  final int? initialEntryId;
 
   @override
   ConsumerState<JournalComposer> createState() => _JournalComposerState();
@@ -48,6 +53,11 @@ class _JournalComposerState extends ConsumerState<JournalComposer> {
   /// classified".
   JournalExtraction? _extraction;
 
+  /// The entry that reading came from, so it can be taken back.
+  int? _entryId;
+  DateTime? _entryAt;
+  bool _undoing = false;
+
   @override
   void initState() {
     super.initState();
@@ -55,6 +65,7 @@ class _JournalComposerState extends ConsumerState<JournalComposer> {
     _expanded = widget.initiallyExpanded;
     _message = widget.initialMessage;
     _extraction = widget.initialExtraction;
+    _entryId = widget.initialEntryId;
   }
 
   @override
@@ -110,8 +121,11 @@ class _JournalComposerState extends ConsumerState<JournalComposer> {
       _saving = true;
       _message = 'Aether is reading the entry once…';
       _extraction = null;
+      _entryId = null;
+      _entryAt = null;
     });
     try {
+      final savedAt = DateTime.now();
       final result = await JournalService(
         database: ref.read(databaseProvider),
         client: client,
@@ -120,6 +134,7 @@ class _JournalComposerState extends ConsumerState<JournalComposer> {
         profile: profile,
         source: _spokenDraft ? 'spoken' : 'typed',
         locale: Localizations.localeOf(context).toLanguageTag(),
+        createdAt: savedAt,
       );
       if (!mounted) return;
       _controller.clear();
@@ -130,6 +145,8 @@ class _JournalComposerState extends ConsumerState<JournalComposer> {
       setState(() {
         _saving = false;
         _extraction = result.extraction;
+        _entryId = result.entryId;
+        _entryAt = savedAt;
         // The receipt below now says what was added, so the confirmation only
         // has to say that something was.
         _message = strength?.needsUserDetail == true
@@ -158,6 +175,40 @@ class _JournalComposerState extends ConsumerState<JournalComposer> {
               'Saved locally, but classification failed. Retry is available.';
         });
       }
+    }
+  }
+
+  /// Takes back a reading the user says is wrong (Q6). The prose is kept —
+  /// they are rejecting the interpretation, not their own writing.
+  Future<void> _undo() async {
+    final entryId = _entryId;
+    final entryAt = _entryAt;
+    final extraction = _extraction;
+    if (entryId == null || entryAt == null || extraction == null) return;
+    setState(() => _undoing = true);
+    try {
+      await JournalService(
+        database: ref.read(databaseProvider),
+        client: ref.read(aetherClientProvider)!,
+      ).undo(
+        entryId: entryId,
+        createdAt: entryAt,
+        extraction: extraction,
+      );
+      if (!mounted) return;
+      setState(() {
+        _undoing = false;
+        _extraction = null;
+        _entryId = null;
+        _entryAt = null;
+        _message = 'Taken back. Your words are kept.';
+      });
+    } on Object {
+      if (!mounted) return;
+      setState(() {
+        _undoing = false;
+        _message = 'That could not be taken back. The day is unchanged.';
+      });
     }
   }
 
@@ -284,7 +335,13 @@ class _JournalComposerState extends ConsumerState<JournalComposer> {
                               ),
                       ),
                       if (_extraction != null)
-                        _ExtractionReading(_extraction!),
+                        _ExtractionReading(
+                          _extraction!,
+                          // Only offered for a reading from this session: an
+                          // atlas-seeded one has no entry behind it to revert.
+                          onUndo: _entryId == null ? null : _undo,
+                          undoing: _undoing,
+                        ),
                       if (_showPrivacy) ...[
                         const SizedBox(height: EterSpace.s8),
                         Text(
@@ -319,9 +376,15 @@ class _ReadingLine {
 /// numbers; this lists what it actually understood, so a wrong reading is
 /// visible at the moment it is made rather than discovered later in the totals.
 class _ExtractionReading extends StatelessWidget {
-  const _ExtractionReading(this.extraction);
+  const _ExtractionReading(this.extraction, {this.onUndo, this.undoing = false});
 
   final JournalExtraction extraction;
+
+  /// Showing the reading closed half of Q6; this closes the other half. A
+  /// wrong reading can be rejected where it is seen, rather than leaving the
+  /// user to find its effects scattered through the day's totals.
+  final Future<void> Function()? onUndo;
+  final bool undoing;
 
   static String _kcal(double value) => '${value.round()} kcal';
 
@@ -395,11 +458,16 @@ class _ExtractionReading extends StatelessWidget {
                 ],
               ),
             ),
-          // Deliberately no "correct this" line: there is currently no edit or
-          // delete path for a nutrition or activity row anywhere in the app,
-          // and copy that offers one it cannot honour is worse than silence.
-          // Making the reading *visible* is the half of Q6 that can ship
-          // today; making it correctable needs a real edit path first.
+          if (onUndo != null)
+            Padding(
+              padding: const EdgeInsets.only(top: EterSpace.s8),
+              child: EterAction(
+                label: 'Not right — take it back',
+                emphasis: EterActionEmphasis.quiet,
+                busy: undoing,
+                onPressed: undoing ? null : () => onUndo!(),
+              ),
+            ),
         ],
       ),
     );
