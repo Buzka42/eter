@@ -647,3 +647,51 @@ UI pass item.
 5.3 (fast-access rail), 5.5 + 5.12 (merge Pulse and Live), 5.4 (time-of-day
 opening per Q1), 5.10 + 5.11 (ritual moments), C10 (`SurfaceIntent` per Q3), and
 the persistent foot-anchored composer half of 5.6.
+
+---
+
+## 9. Tier 2 complete — 27 July 2026
+
+Everything in the §7 sequencing is now implemented. `flutter analyze` is
+clean and 116 tests pass, including three new non-golden tests.
+
+| Item | What landed |
+|---|---|
+| 5.6 Log | Extraction shown under a `READ AS` rule; collapsed Log advertises itself; ghost text; "Dictate" |
+| 5.13 Sanctum | Resting figure de-duplicated; leading icons dropped; sparkline labelled; `_SettingsPanel` → `EterPlate` |
+| 5.10 Vessel | The prompt reaches the Sanctum instead of naming it |
+| 5.4 Opening | Reading leads before 11:00, demoted beneath a state line after (Q1); void tightened |
+| C10 | `SurfaceIntent` ceiling model (Q3) |
+| 5.14 | Calm Mode asserted; tap targets raised to 48 px and pinned |
+| 5.3 | Gust applied to the Sanctum; section rail at the right margin |
+| 5.5 + 5.12 | One session, one surface |
+
+### Two things worth knowing
+
+- **`showsOrnamentHere` must be called below the scope.** A widget that
+  returns a `SurfaceIntentScope` cannot resolve intent with its own build
+  context — that context sits above the scope it is creating, so it reads the
+  ambient value. This bit `_Dashboard`'s figure accent once; the fix is to
+  resolve in a child widget, as `_Figure` now does.
+- **The atlas shows 827 where the Scales show 828.** Both read the same
+  `burnedSoFarToday`; the figure animates through `CountUpText` and the
+  capture lands a frame before it settles. It is deterministic, not flaky,
+  but do not read the atlas figures as exact.
+
+### Genuinely still open
+
+- **Correction of an extracted reading (the other half of Q6).** There is no
+  edit or delete path for a nutrition or activity row anywhere in the app.
+  This needs database methods that can reverse an applied extraction plus an
+  entry-level UI — a data-layer change, not a UI pass item, and one that
+  deletes user data, so it wants its own scoped work.
+- **Gold line-work on Day Sky** measures ~1.15:1. Decorative rather than
+  informational, so not an AA failure, but close to invisible on a bright
+  sky. Either commission the calmer Day Sky plate (§C8) or accept it
+  deliberately.
+- **Q4 Day Sky card loops** remain uncommissioned by decision, not oversight.
+- **Error-state goldens** for network-dependent surfaces (§5.14) are still
+  absent; only the Vessel has a visible failure path.
+- **5.6's foot-anchored persistent composer** was not attempted: it changes
+  shell layout rather than the Log, and the discoverability problem it was
+  meant to solve is addressed by the collapsed-state invitation.
