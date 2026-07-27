@@ -54,21 +54,32 @@ class ScalesSection extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('THE SCALES', style: Theme.of(context).textTheme.labelSmall),
-        const SizedBox(height: EterSpace.s16),
+        // No 'THE SCALES' header (C3): the balance graphic names itself, and
+        // the plate's hairline top rule already marks where the section starts.
         EterPlate(
           child: Column(
             children: [
-              EngravedBalance(
-                intake: intake,
-                burn: burn,
-                tilt: (net / 600 * 6).clamp(-6, 6),
-              ),
-              const SizedBox(height: EterSpace.s16),
-              Text(
-                verdict,
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
+              // C6: with nothing eaten yet the balance can only slam to one
+              // side, which reads as a verdict rather than an absence. The
+              // instrument appears once there are two quantities to weigh.
+              if (entries.isEmpty)
+                const EmptyStateOrnament(
+                  asset: 'assets/art/empty-balance.png',
+                  caption: 'Log something eaten and the scales will settle.',
+                  width: 180,
+                )
+              else ...[
+                EngravedBalance(
+                  intake: intake,
+                  burn: burn,
+                  tilt: (net / 600 * 6).clamp(-6, 6),
+                ),
+                const SizedBox(height: EterSpace.s16),
+                Text(
+                  verdict,
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+              ],
             ],
           ),
         ),
@@ -111,32 +122,55 @@ class _TimelineSparklineState extends ConsumerState<TimelineSparkline> {
               children: [
                 Expanded(
                   child: Text(
-                    'DAY TIMELINE',
+                    'THE TIMELINE',
                     style: Theme.of(context).textTheme.labelSmall,
                   ),
                 ),
-                Text(
-                  '${rows.length} active min',
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
+                if (rows.isNotEmpty)
+                  Text(
+                    '${rows.length} active min',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
                 const SizedBox(width: EterSpace.s8),
-                Icon(_expanded ? Icons.remove : Icons.add, size: 18),
+                // Chevron, not +/− (C9): '+' means create everywhere else in
+                // an app whose primary verb is "add to today".
+                Icon(
+                  _expanded
+                      ? Icons.keyboard_arrow_up
+                      : Icons.keyboard_arrow_down,
+                  size: 18,
+                ),
               ],
             ),
           ),
         ),
-        SizedBox(
-          height: _expanded ? 220 : 72,
-          width: double.infinity,
-          child: CustomPaint(
-            painter: _SparkPainter(
-              values: values,
-              accent: accent,
-              night: Theme.of(context).brightness == Brightness.dark,
-              expanded: _expanded,
+        // C6: a flat line above "0 active min" is a void pretending to be a
+        // chart. Until there is movement to draw, show the commissioned empty
+        // ornament and one line of intent instead.
+        if (rows.isEmpty)
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: EterSpace.s8),
+            child: Center(
+              child: EmptyStateOrnament(
+                asset: 'assets/art/empty-timeline.png',
+                caption: 'Movement will trace itself here through the day.',
+                width: 180,
+              ),
+            ),
+          )
+        else
+          SizedBox(
+            height: _expanded ? 220 : 72,
+            width: double.infinity,
+            child: CustomPaint(
+              painter: _SparkPainter(
+                values: values,
+                accent: accent,
+                night: Theme.of(context).brightness == Brightness.dark,
+                expanded: _expanded,
+              ),
             ),
           ),
-        ),
       ],
     );
   }

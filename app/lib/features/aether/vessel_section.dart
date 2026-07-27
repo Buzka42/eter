@@ -68,7 +68,12 @@ class _VesselSectionState extends ConsumerState<VesselSection> {
             child: Row(
               children: [
                 Expanded(child: Text('THE VESSEL', style: text.labelSmall)),
-                Icon(_expanded ? Icons.remove : Icons.add, size: 18),
+                Icon(
+                  _expanded
+                      ? Icons.keyboard_arrow_up
+                      : Icons.keyboard_arrow_down,
+                  size: 18,
+                ),
               ],
             ),
           ),

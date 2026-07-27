@@ -230,8 +230,8 @@ class _PanLabels extends StatelessWidget {
             );
         return Stack(
           children: [
-            figure(g.leftPan, 'Taken in', intake),
-            figure(g.rightPan, 'Spent', burn),
+            figure(g.leftPan, 'Eaten', intake),
+            figure(g.rightPan, 'Burned', burn),
           ],
         );
       },

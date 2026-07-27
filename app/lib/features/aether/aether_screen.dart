@@ -5,7 +5,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../core/controls.dart';
-import '../../core/instruments.dart';
 import '../../core/aether/guidance.dart';
 import '../../core/aether/guidance_service.dart';
 import '../../core/aether/lifestyle.dart';
@@ -427,10 +426,16 @@ class _GuidanceMoment extends StatelessWidget {
               Expanded(
                 child: Text(
                   mystical ? '✦  $dateLine' : dateLine,
+                  // C8 — this line sits on bare sky with no plate to lift it.
+                  // Measured on the Day Sky photograph: aura700 gold reaches
+                  // only 1.15:1 and the default secondary ink600 2.15:1, both
+                  // far under AA; ink900 makes 4.77:1. Day therefore keeps the
+                  // ✦ as its ornament signature but drops the gold ink. Night
+                  // sky is dark enough for aura300 to stand.
                   style: text.labelSmall?.copyWith(
-                    color: mystical
-                        ? (night ? EterColors.aura300 : EterColors.aura700)
-                        : null,
+                    color: night
+                        ? (mystical ? EterColors.aura300 : null)
+                        : EterColors.ink900,
                   ),
                 ),
               ),
@@ -491,7 +496,10 @@ class _GuidanceMoment extends StatelessWidget {
             guidance.source == 'local'
                 ? 'Composed privately on this device'
                 : 'Composed by Aether',
-            style: text.labelSmall,
+            // Also on bare sky (C8): ink600 measures 2.15:1 on Day.
+            style: text.labelSmall?.copyWith(
+              color: night ? null : EterColors.ink900,
+            ),
           ),
           const SizedBox(height: EterSpace.s16),
           Center(child: _DescendHint(onTap: onDescend)),
@@ -652,13 +660,13 @@ class _Dashboard extends ConsumerWidget {
             children: [
               _Figure(
                 value: intake,
-                label: 'Taken in',
+                label: 'Eaten',
                 unit: 'kcal',
               ),
               _FigureDivider(mystical: mystical),
               _Figure(
                 value: day.activeKcal,
-                label: 'Moved',
+                label: 'Burned',
                 unit: 'kcal',
                 // The element accent is a mystical signature, so grounded —
                 // which carries no ornament at all — must not paint one figure
@@ -675,35 +683,15 @@ class _Dashboard extends ConsumerWidget {
               ),
             ],
           ),
-          const SizedBox(height: EterSpace.s32),
-          Row(
-            children: [
-              Expanded(
-                child: EngravedGauge(
-                  progress: day.activeKcal / kActiveGoalKcal,
-                  label: 'Active',
-                  value: '${(100 * day.activeKcal / kActiveGoalKcal).floor()}%',
-                ),
-              ),
-              Expanded(
-                child: EngravedGauge(
-                  progress: day.steps / 8000,
-                  label: 'Steps',
-                  value: NumberFormat.compact().format(day.steps),
-                ),
-              ),
-              Expanded(
-                child: EngravedGauge(
-                  progress: day.sessions / 1,
-                  label: 'Sessions',
-                  value: '${day.sessions}',
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: EterSpace.s48),
+          // The ring-gauge row was deleted (C1/A3): Active and Steps restated
+          // two of the three figures 32 px above, and the donut is the stock
+          // fitness-app component the aesthetic directive rules out.
+          // Figures, Scales and Timeline are one movement — the day's
+          // quantities — so they breathe at 24 (C3). The 48s are reserved for
+          // boundaries between movements.
+          const SizedBox(height: EterSpace.s24),
           const ScalesSection(),
-          const SizedBox(height: EterSpace.s48),
+          const SizedBox(height: EterSpace.s24),
           const TimelineSparkline(),
           if (patterns.isNotEmpty) ...[
             const SizedBox(height: EterSpace.s48),

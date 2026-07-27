@@ -35,6 +35,7 @@ class _JournalComposerState extends ConsumerState<JournalComposer> {
   bool _saving = false;
   bool _listening = false;
   bool _spokenDraft = false;
+  bool _showPrivacy = false;
   String? _message;
 
   @override
@@ -159,7 +160,21 @@ class _JournalComposerState extends ConsumerState<JournalComposer> {
             child: Row(
               children: [
                 Expanded(child: Text('THE LOG', style: textTheme.labelSmall)),
-                Icon(_expanded ? Icons.remove : Icons.add, size: 18),
+                // The privacy note is reassurance, and permanent reassurance
+                // is noise (C7) — it now sits behind this affordance.
+                IconButton(
+                  tooltip: 'How this entry is handled',
+                  visualDensity: VisualDensity.compact,
+                  onPressed: () =>
+                      setState(() => _showPrivacy = !_showPrivacy),
+                  icon: const Icon(Icons.info_outline, size: 18),
+                ),
+                Icon(
+                  _expanded
+                      ? Icons.keyboard_arrow_up
+                      : Icons.keyboard_arrow_down,
+                  size: 18,
+                ),
               ],
             ),
           ),
@@ -204,16 +219,42 @@ class _JournalComposerState extends ConsumerState<JournalComposer> {
                           ),
                         ],
                       ),
-                      if (_message != null) ...[
-                        const SizedBox(height: EterSpace.s8),
-                        Text(_message!, style: textTheme.bodySmall),
-                      ],
-                      const SizedBox(height: EterSpace.s8),
-                      Text(
-                        'Audio stays on this device. Prose is sent once for '
-                        'extraction; later guidance sees totals only.',
-                        style: textTheme.bodySmall,
+                      // A confirmation is a *response*, not a label, so it
+                      // arrives in the meaning-carrying ink and animates in —
+                      // otherwise it reads as boilerplate (C7).
+                      AnimatedSwitcher(
+                        duration: EterMotion.durStandard,
+                        transitionBuilder: (child, animation) => FadeTransition(
+                          opacity: animation,
+                          child: SizeTransition(
+                            sizeFactor: animation,
+                            alignment: Alignment.topCenter,
+                            child: child,
+                          ),
+                        ),
+                        child: _message == null
+                            ? const SizedBox.shrink()
+                            : Padding(
+                                key: ValueKey(_message),
+                                padding:
+                                    const EdgeInsets.only(top: EterSpace.s8),
+                                child: Text(
+                                  _message!,
+                                  style: textTheme.bodySmall?.copyWith(
+                                    color: EterInk.of(context).lineStrong,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
                       ),
+                      if (_showPrivacy) ...[
+                        const SizedBox(height: EterSpace.s8),
+                        Text(
+                          'Audio stays on this device. Prose is sent once for '
+                          'extraction; later guidance sees totals only.',
+                          style: textTheme.bodySmall,
+                        ),
+                      ],
                     ],
                   ),
                 ),

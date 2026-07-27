@@ -24,9 +24,16 @@ class EterPlate extends StatelessWidget {
     return Container(
       padding: padding ?? const EdgeInsets.all(EterSpace.s16),
       decoration: BoxDecoration(
+        // C8 — measured against the Day Sky photograph's realistic worst case
+        // (5th-percentile-darkest pixel, RGB 115,155,217). At the old 0.30 the
+        // secondary ink600 reached only 3.25:1; 0.68 lifts it to 4.83:1 and
+        // ink900 to 10.7:1, both clear of WCAG AA. Darkening ink600 instead was
+        // rejected: to pass on *bare* sky it had to reach #25303B, all but
+        // identical to ink900, which erases the secondary tier. Night at 0.45
+        // already measures 14.5:1 / 8.3:1, so it is left alone.
         color: night
             ? EterColors.night900.withValues(alpha: 0.45)
-            : EterColors.mist0.withValues(alpha: 0.30),
+            : EterColors.mist0.withValues(alpha: 0.68),
         border: Border(top: BorderSide(color: ink.line)),
       ),
       child: child,

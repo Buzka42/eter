@@ -453,6 +453,9 @@ class _LiveScreenState extends ConsumerState<LiveScreen> {
     final zone = profile == null || _bpm == null
         ? 0
         : hrZone(_bpm!.toDouble(), hrMaxTanaka(profile.age));
+    // Nothing has been measured yet: no live reading, no running session and
+    // no elapsed time from one just finished.
+    final dormant = !_active && _bpm == null && _elapsedSeconds == 0;
     if (widget.compact) {
       return EterPlate(
         child: Column(
@@ -470,21 +473,34 @@ class _LiveScreenState extends ConsumerState<LiveScreen> {
                     ],
                   ),
                 ),
-                Text(
-                  '${_bpm ?? '—'} BPM',
-                  style: text.headlineSmall,
-                ),
+                // A6: no em-dash placeholder. A reading appears when there is
+                // one to report.
+                if (_bpm != null)
+                  Text('$_bpm BPM', style: text.headlineSmall),
               ],
             ),
-            const SizedBox(height: EterSpace.s16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                _Metric('TIME', _formatTime(_elapsedSeconds)),
-                _Metric('ENERGY', '${_kcal.round()} kcal'),
-                _Metric('SOURCE', _sensor == null ? 'Estimated' : 'Zone $zone'),
-              ],
-            ),
+            // C6/A6: before anything has happened, a dashboard of zeros
+            // (0:00 · 0 kcal · Estimated) tells the user nothing. One line of
+            // intent replaces the slots; they return the moment they mean
+            // something.
+            if (dormant) ...[
+              const SizedBox(height: EterSpace.s8),
+              Text(
+                'Begin a session to read heart rate and energy.',
+                style: text.bodyMedium,
+              ),
+            ] else ...[
+              const SizedBox(height: EterSpace.s16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  _Metric('TIME', _formatTime(_elapsedSeconds)),
+                  _Metric('ENERGY', '${_kcal.round()} kcal'),
+                  _Metric(
+                      'SOURCE', _sensor == null ? 'Estimated' : 'Zone $zone'),
+                ],
+              ),
+            ],
             const SizedBox(height: EterSpace.s16),
             EterAction(
               label: _active ? 'Finish session' : 'Begin session',
@@ -629,9 +645,13 @@ class _LiveScreenState extends ConsumerState<LiveScreen> {
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: EterSpace.s16),
                 child: Text(
+                  // One status line per condition (C7). The phase label above
+                  // already states "No sensor selected" and the subtitle
+                  // already offers the estimate; this line speaks only for
+                  // the scan.
                   _scanning
                       ? 'Listening for nearby heart-rate services…'
-                      : 'No sensor selected. Estimated sessions remain available.',
+                      : 'No devices found nearby.',
                   style: text.bodyMedium,
                 ),
               ),

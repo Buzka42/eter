@@ -564,3 +564,51 @@ session's one golden change was verified as a deliberate resampling improvement
 before being accepted), and add goldens for the flows that currently have none —
 auth, reduce-motion, and error states. An unscreenshotted surface is an
 unreviewed one.
+
+---
+
+## 8. Implementation status — Tier 1 complete, 27 July 2026
+
+All Tier 1 items in the §7 sequencing are implemented, analyzer-clean and
+covered by regenerated goldens reviewed by eye.
+
+| Item | Done | Note |
+|---|---|---|
+| C4 edge clipping | yes | `inGutter()` wrapper; clipping was harness-only |
+| C5 empty/zero copy | yes | verdict branches on `entries.isEmpty` |
+| A1 capsule killed | yes | `EterAction` caps+rule at all emphases; `elevatedButtonTheme` removed |
+| A4 radii | yes | `rCard` deleted; plates square, `rChip` kept for card-like art |
+| A2 glassmorphism | yes | `GlassCard` → `EterPlate`: flat scrim, hairline top rule, no blur |
+| C1 / A3 gauge row | yes | ring row deleted outright |
+| C3 spacing/headers | yes | figures+Scales+Timeline are one movement at 24; `THE SCALES` dropped; `DAY TIMELINE` → `THE TIMELINE` |
+| C7 status copy | yes | Log confirmation now gold + animated; privacy note behind an info affordance; Live's third sentence reduced to the scan |
+| C2 lexicon | yes | **Eaten / Burned** on figures and both Scales pans |
+| C9 disclosure | yes | chevrons in Log, Timeline, Vessel; `+` reserved for creation |
+| C8 Day Sky contrast | yes | see measurements below |
+| C6 / A6 empty states | yes | Pulse drops metric slots when dormant; Timeline and Scales use `EmptyStateOrnament` with the commissioned art |
+
+### C8 — measured, not estimated
+
+Contrast computed against the Day Sky photograph itself (`sky_background_day.png`),
+using the 1st/5th-percentile-darkest pixel as the realistic worst case:
+
+- **On a plate.** The day scrim was raised `mist0` α 0.30 → **0.68**. `ink600`
+  goes 3.25:1 → **4.83:1**, `ink900` → 10.7:1. Night at α 0.45 already measured
+  14.5:1 / 8.3:1 and was left alone.
+- **Darkening the token was rejected.** For `ink600` to pass on *bare* sky it had
+  to reach `#25303B` — all but identical to `ink900` — which erases the
+  secondary tier entirely.
+- **On bare sky.** `ink900` passes everywhere (4.77:1 worst case), so the prose
+  reading is safe. `ink600` (2.15:1) and `aura700` gold (**1.15:1** — effectively
+  invisible) do not. The two bare-sky captions on the guidance screen now use
+  `ink900` on Day; the ✦ is kept as the ornament signature in place of gold ink.
+
+### Known remaining
+
+- **Gold line-work on Day Sky** (the ornament rule on the guidance screen) sits
+  at roughly the same 1.15:1 as the gold text did. It is decorative rather than
+  informational, so it is not an AA failure, but it is close to invisible on a
+  bright sky and deserves a deliberate decision.
+- `EngravedGauge` (`instruments.dart`) is now unreferenced after C1/A3.
+- Tier 2 is untouched: 5.6 (Log as centre / extraction trust, the highest-value
+  item per Q6), 5.3, 5.5+5.12, 5.4, 5.10+5.11, and C10's `SurfaceIntent`.
