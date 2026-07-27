@@ -76,15 +76,14 @@ class SettingsScreen extends ConsumerWidget {
                             style: Theme.of(context).textTheme.titleLarge,
                           ),
                           const SizedBox(height: 4),
+                          // The resting figure used to be repeated here and in
+                          // the Body weight row on the same screen (§5.13). It
+                          // is a measurement, not an identity, so it lives with
+                          // the body — this card carries the arcana alone.
                           Text(
-                            '${profile.zodiac.label} · ${profile.rmr.round()} resting kcal',
+                            profile.zodiac.label,
                             style: Theme.of(context).textTheme.bodyMedium,
                           ),
-                          if (profile.rmrIsApproximate)
-                            Text(
-                              'Estimate based on available measurements',
-                              style: Theme.of(context).textTheme.labelSmall,
-                            ),
                         ],
                       ),
                     ),
@@ -100,17 +99,27 @@ class SettingsScreen extends ConsumerWidget {
                   children: [
                     ListTile(
                       contentPadding: EdgeInsets.zero,
-                      leading: const Icon(Icons.monitor_weight_outlined),
                       title: const Text('Body weight'),
                       subtitle: Text(
-                        '${profile.weightKg.toStringAsFixed(1)} kg · ${profile.rmr.round()} resting kcal',
+                        '${profile.weightKg.toStringAsFixed(1)} kg · '
+                        '${profile.rmr.round()} resting kcal'
+                        '${profile.rmrIsApproximate ? ' (estimated)' : ''}',
                       ),
                       trailing: IconButton(
                         icon: const Icon(Icons.add),
                         onPressed: () => _addWeight(context, ref, profile),
                       ),
                     ),
-                    if (weights.length >= 2)
+                    if (weights.length >= 2) ...[
+                      // An unlabelled trend line does not say what span it
+                      // covers (§5.13).
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          'LAST 30 DAYS',
+                          style: Theme.of(context).textTheme.labelSmall,
+                        ),
+                      ),
                       SizedBox(
                         height: 72,
                         width: double.infinity,
@@ -134,6 +143,7 @@ class SettingsScreen extends ConsumerWidget {
                           ),
                         ),
                       ),
+                    ],
                   ],
                 ),
               ),
@@ -144,7 +154,6 @@ class SettingsScreen extends ConsumerWidget {
                   children: [
                     ListTile(
                       contentPadding: EdgeInsets.zero,
-                      leading: const Icon(Icons.health_and_safety_outlined),
                       title: const Text('Sync health data'),
                       subtitle: const Text('Health Connect · Apple Health'),
                       trailing: const Icon(Icons.chevron_right),
@@ -152,7 +161,6 @@ class SettingsScreen extends ConsumerWidget {
                     ),
                     ListTile(
                       contentPadding: EdgeInsets.zero,
-                      leading: const Icon(Icons.date_range_outlined),
                       title: const Text('Resync date range'),
                       subtitle: const Text('Up to 30 days'),
                       trailing: const Icon(Icons.chevron_right),
@@ -160,7 +168,6 @@ class SettingsScreen extends ConsumerWidget {
                     ),
                     ListTile(
                       contentPadding: EdgeInsets.zero,
-                      leading: const Icon(Icons.bluetooth_searching),
                       title: const Text('Pair a heart-rate sensor'),
                       subtitle: const Text('Scan and connect nearby devices'),
                       trailing: const Icon(Icons.chevron_right),
@@ -178,7 +185,6 @@ class SettingsScreen extends ConsumerWidget {
                     for (final sensor in sensors)
                       ListTile(
                         contentPadding: EdgeInsets.zero,
-                        leading: const Icon(Icons.bluetooth_connected),
                         title: Text(sensor.name),
                         subtitle: Text(sensor.paired
                             ? 'Paired heart-rate sensor'
@@ -225,7 +231,6 @@ class SettingsScreen extends ConsumerWidget {
                   children: [
                     ListTile(
                       contentPadding: EdgeInsets.zero,
-                      leading: const Icon(Icons.tune),
                       title: const Text('Guidance style'),
                       subtitle: Text(profile.guidanceMode.name),
                       trailing: const Icon(Icons.chevron_right),
@@ -239,7 +244,6 @@ class SettingsScreen extends ConsumerWidget {
                     if (patterns.isEmpty)
                       const ListTile(
                         contentPadding: EdgeInsets.zero,
-                        leading: Icon(Icons.insights_outlined),
                         title: Text('Learned patterns'),
                         subtitle: Text(
                           'Aether starts looking for inspectable patterns after seven days.',
@@ -249,7 +253,6 @@ class SettingsScreen extends ConsumerWidget {
                       for (final pattern in patterns)
                         ListTile(
                           contentPadding: EdgeInsets.zero,
-                          leading: const Icon(Icons.insights_outlined),
                           title: Text(pattern.summary),
                           subtitle: Text(
                             'Association · ${(pattern.confidence * 100).round()}% confidence',
@@ -279,7 +282,6 @@ class SettingsScreen extends ConsumerWidget {
                 child: integrations.isEmpty
                     ? const ListTile(
                         contentPadding: EdgeInsets.zero,
-                        leading: Icon(Icons.sync_problem_outlined),
                         title: Text('No health import yet'),
                         subtitle: Text(
                           'Sync once to inspect source and freshness.',
@@ -503,13 +505,14 @@ class _IntegrationDiagnostics extends StatelessWidget {
                 : 'Import current';
     return ListTile(
       contentPadding: EdgeInsets.zero,
-      leading: Icon(
-        source.status == 'failed'
-            ? Icons.error_outline
-            : stale
-                ? Icons.schedule
-                : Icons.health_and_safety_outlined,
-      ),
+      // The decorative leading icons are gone from every row (§5.13); a glyph
+      // here now means something is wrong. A healthy import says so in words
+      // and needs no badge.
+      leading: source.status == 'failed'
+          ? const Icon(Icons.error_outline)
+          : stale
+              ? const Icon(Icons.schedule)
+              : null,
       title: Text(state),
       subtitle: Text([
         'Steps $steps · heart rate $heart · energy $energy',
@@ -651,25 +654,12 @@ class _SettingsPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final dark = Theme.of(context).brightness == Brightness.dark;
-    return Container(
+    // Was a radius-16 card with an all-round gold border and a drop shadow —
+    // the last survivor of the styling A2/A4 removed everywhere else, missed
+    // because that pass only rewrote GlassCard. It is a plate like the rest.
+    return EterPlate(
       padding: const EdgeInsets.fromLTRB(
           EterSpace.s16, EterSpace.s12, EterSpace.s16, EterSpace.s12),
-      decoration: BoxDecoration(
-        color: (dark ? EterColors.night800 : EterColors.mist0)
-            .withValues(alpha: .88),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: EterColors.aura500.withValues(alpha: dark ? .28 : .22),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF08111E).withValues(alpha: dark ? .2 : .05),
-            blurRadius: 24,
-            offset: const Offset(0, 10),
-          ),
-        ],
-      ),
       child: Material(
         type: MaterialType.transparency,
         child: child,
