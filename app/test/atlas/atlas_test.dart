@@ -147,6 +147,7 @@ void main() {
     bool settle = false,
     DateTime? now,
     bool reduceMotion = false,
+    List<Override> overrides = const [],
   }) async {
     // Mirrors app.dart: the register is installed at the root from the
     // profile's guidance mode, and every surface reads its ornament level
@@ -173,6 +174,7 @@ void main() {
               // Surfaces that derive figures from the time of day render
               // differently one minute later, so the atlas pins the clock.
               nowProvider.overrideWithValue(() => now ?? todayAt14),
+              ...overrides,
             ],
             child: MaterialApp(
               debugShowCheckedModeBanner: false,
@@ -373,6 +375,35 @@ void main() {
         ),
       )),
       profile: fixtureProfile(),
+    );
+  });
+
+  // §5.14: the failure states of network-dependent surfaces had no goldens at
+  // all, so a regression in how an error reads would have been invisible.
+  testWidgets('atlas: log classification failed', (tester) async {
+    await capture(
+      tester,
+      'log_failed',
+      inGutter(const JournalComposer(
+        initiallyExpanded: true,
+        initialMessage:
+            'Saved locally, but classification failed. Retry is available.',
+      )),
+      profile: fixtureProfile(),
+    );
+  });
+
+  testWidgets('atlas: aether offline', (tester) async {
+    await capture(
+      tester,
+      'aether_offline',
+      AetherScreen(onOpenFeatures: () {}),
+      profile: fixtureProfile(mode: GuidanceMode.immersive),
+      overrides: [
+        currentGuidanceProvider.overrideWith(
+          (ref) => throw StateError('guidance unavailable'),
+        ),
+      ],
     );
   });
 

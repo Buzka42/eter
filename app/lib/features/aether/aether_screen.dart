@@ -699,7 +699,11 @@ class _GuidanceMoment extends ConsumerWidget {
           // stays with what it captions.
           const Spacer(flex: 2),
           Text(
-            guidance.source == 'local'
+            // Any on-device source, not just the one literally named 'local':
+            // the offline fallback is 'emergency-local', and an exact match
+            // had this caption claiming Aether composed a reading it never
+            // saw. Provenance copy has to be true or it is worse than absent.
+            guidance.source.endsWith('local')
                 ? 'Composed privately on this device'
                 : 'Composed by Aether',
             // Also on bare sky (C8): ink600 measures 2.15:1 on Day.
