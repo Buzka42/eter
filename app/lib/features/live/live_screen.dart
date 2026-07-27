@@ -475,8 +475,7 @@ class _LiveScreenState extends ConsumerState<LiveScreen> {
                 ),
                 // A6: no em-dash placeholder. A reading appears when there is
                 // one to report.
-                if (_bpm != null)
-                  Text('$_bpm BPM', style: text.headlineSmall),
+                if (_bpm != null) Text('$_bpm BPM', style: text.headlineSmall),
               ],
             ),
             // C6/A6: before anything has happened, a dashboard of zeros
@@ -512,14 +511,9 @@ class _LiveScreenState extends ConsumerState<LiveScreen> {
                       ? null
                       : _start,
             ),
-            if (_sensor == null)
-              Padding(
-                padding: const EdgeInsets.only(top: EterSpace.s8),
-                child: Text(
-                  'Sensor pairing and forgetting live in The Sanctum.',
-                  style: text.bodySmall,
-                ),
-              ),
+            // "Sensor pairing and forgetting live in The Sanctum" used to sit
+            // here permanently. It is documentation, not interface (§5.5), and
+            // it described a place rather than offering to go there.
           ],
         ),
       );
@@ -534,78 +528,17 @@ class _LiveScreenState extends ConsumerState<LiveScreen> {
             132,
           ),
           children: [
-            Text('Live Session', style: text.displayMedium),
+            // 5.5/5.12: this surface is reached from the Sanctum's "Pair a
+            // heart-rate sensor" row, and it used to render the whole session
+            // as well — the same ring, metrics and Begin/Finish the Pulse
+            // block already owns on the dashboard. Two surfaces ran one
+            // session at two fidelities. The session now lives only in the
+            // Pulse block, and this one does what its entry point promises.
+            Text('Heart-rate sensor', style: text.displayMedium),
             Text(_phase.label, style: text.titleMedium),
             Text(
-              _active
-                  ? 'Heart rate and energy in real time'
-                  : 'Pair a sensor or begin with an estimate',
+              'Pair a sensor here; sessions run from The Pulse.',
               style: text.bodyMedium,
-            ),
-            const SizedBox(height: EterSpace.s24),
-            EterPlate(
-              child: Column(
-                children: [
-                  AnimatedContainer(
-                    duration: EterMotion.durStandard,
-                    width: 148,
-                    height: 148,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: EterColors.aura500,
-                        width: _active ? 3 : 1,
-                      ),
-                      boxShadow: _active
-                          ? [
-                              BoxShadow(
-                                color:
-                                    EterColors.aura500.withValues(alpha: .28),
-                                blurRadius: 32,
-                                spreadRadius: 4,
-                              ),
-                            ]
-                          : null,
-                    ),
-                    child: Center(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(Icons.favorite,
-                              color: EterColors.elemFire),
-                          Text('${_bpm ?? '—'}', style: text.headlineLarge),
-                          Text(_bpm == null ? 'BPM' : 'ZONE $zone',
-                              style: text.labelSmall),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: EterSpace.s24),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      _Metric('TIME', _formatTime(_elapsedSeconds)),
-                      _Metric('ENERGY', '${_kcal.round()} kcal'),
-                      _Metric('SOURCE',
-                          _sensor == null ? 'Estimated' : 'Heart rate'),
-                    ],
-                  ),
-                  const SizedBox(height: EterSpace.s24),
-                  EterAction(
-                    label: _active ? 'Finish session' : 'Begin session',
-                    emphasis: EterActionEmphasis.primary,
-                    icon: _active
-                        ? Icons.stop_outlined
-                        : Icons.play_arrow_outlined,
-                    onPressed: _active
-                        ? _finish
-                        : _sensor != null &&
-                                _phase != SensorConnectionPhase.receiving
-                            ? null
-                            : _start,
-                  ),
-                ],
-              ),
             ),
             const SizedBox(height: EterSpace.s24),
             Row(

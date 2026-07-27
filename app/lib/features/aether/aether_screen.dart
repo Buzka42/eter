@@ -11,6 +11,7 @@ import '../../core/aether/lifestyle.dart';
 import '../../core/aether/pattern_engine.dart';
 import '../../core/arcana/animated_arcana_card.dart';
 import '../../core/arcana/zodiac.dart';
+import '../../core/arcana/zodiac.dart' as zodiac show Element;
 import '../../core/clock.dart';
 import '../../core/db/app_database.dart';
 import '../../core/energy/energy.dart';
@@ -895,9 +896,7 @@ class _Dashboard extends ConsumerWidget {
                   // like every other ornament (C10). The figures are an
                   // instrument, so no register paints one fire-orange among
                   // plain ink ones.
-                  accent: showsOrnamentHere(context)
-                      ? element.accentFor(Theme.of(context).brightness)
-                      : null,
+                  accentElement: element,
                 ),
                 const _FigureDivider(),
                 _Figure(
@@ -1016,17 +1015,25 @@ class _Figure extends StatelessWidget {
     required this.value,
     required this.label,
     required this.unit,
-    this.accent,
+    this.accentElement,
   });
 
   final double value;
   final String label;
   final String unit;
-  final Color? accent;
+
+  /// Resolved here rather than by the caller: the caller's context sits above
+  /// the SurfaceIntentScope it returns, so it would read the ambient intent
+  /// instead of its own and paint the accent on a plain surface.
+  final zodiac.Element? accentElement;
 
   @override
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
+    final element = accentElement;
+    final accent = element != null && showsOrnamentHere(context)
+        ? element.accentFor(Theme.of(context).brightness)
+        : null;
     return Expanded(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
