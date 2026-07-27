@@ -585,9 +585,5 @@ class EterRule extends StatelessWidget {
   }
 }
 
-/// Radial engraved gauge used where a figure needs a scale behind it.
-/// Kept here so the ring, the slider knob and the toggle share one geometry.
-double eterSweepFor(double progress) => 2 * math.pi * progress.clamp(0.0, 1.0);
-
 /// The line glyph for an activity. Outline weights only — the filled Material
 /// variants sit heavier than every hairline around them.
