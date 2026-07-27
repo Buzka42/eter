@@ -37,7 +37,9 @@ class EterInk {
 
   factory EterInk.of(BuildContext context) {
     final night = Theme.of(context).brightness == Brightness.dark;
-    final ornament = EterRegister.of(context).showsOrnament;
+    // C10: gold is granted by the register and requested by the surface. A
+    // "Add to today" button in the Log stays plain ink even in immersive.
+    final ornament = showsOrnamentHere(context);
     if (ornament) {
       return EterInk._(
         line: EterColors.aura500.withValues(alpha: night ? 0.38 : 0.34),
@@ -153,9 +155,8 @@ class _EterActionState extends State<EterAction> {
     // on both skies; disabled draws no rule at all.
     final night = Theme.of(context).brightness == Brightness.dark;
     final gold = night ? EterColors.aura300 : EterColors.aura700;
-    final ruleColor = enabled
-        ? (primary ? ink.lineStrong : ink.line)
-        : Colors.transparent;
+    final ruleColor =
+        enabled ? (primary ? ink.lineStrong : ink.line) : Colors.transparent;
 
     final Widget rules;
     if (primary) {

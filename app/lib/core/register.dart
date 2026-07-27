@@ -55,6 +55,54 @@ enum EterRegister {
   }
 }
 
+/// How rich a given surface *wants* to be, independent of the user's setting.
+///
+/// The register alone could not express the chosen direction — minimal by
+/// default, rich on moments — because that decision is per-surface, not
+/// per-app: the Log should stay plain even for someone who wants immersion,
+/// and the arcana reveal should sing even for someone who wants restraint
+/// (§4 C10). Pairing the two makes the register a *ceiling* rather than a
+/// level: `grounded` means "even the ritual moments stay quiet", `immersive`
+/// means "let them sing", and no setting can make an instrument ornate.
+enum SurfaceIntent {
+  /// Everyday instruments: the Log, the figures, the Scales, the Timeline,
+  /// the Sanctum. Never ornamented, whatever the register.
+  plain,
+
+  /// Moments: the opening reading, onboarding, the arcana reveal, the Vessel,
+  /// milestones. Ornamented as far as the register permits.
+  ritual,
+}
+
+/// The intent of the nearest enclosing surface. Defaults to [SurfaceIntent
+/// .ritual] so that surfaces which have not been classified keep their
+/// existing appearance rather than silently going plain.
+SurfaceIntent surfaceIntentOf(BuildContext context) =>
+    context.dependOnInheritedWidgetOfExactType<SurfaceIntentScope>()?.intent ??
+    SurfaceIntent.ritual;
+
+/// Whether ornament may be drawn here: the register's permission capped by
+/// what this surface actually wants. This is the resolver that replaces bare
+/// `EterRegister.of(context).showsOrnament` checks.
+bool showsOrnamentHere(BuildContext context) =>
+    surfaceIntentOf(context) == SurfaceIntent.ritual &&
+    EterRegister.of(context).showsOrnament;
+
+/// Declares the intent of everything beneath it.
+class SurfaceIntentScope extends InheritedWidget {
+  const SurfaceIntentScope({
+    super.key,
+    required this.intent,
+    required super.child,
+  });
+
+  final SurfaceIntent intent;
+
+  @override
+  bool updateShouldNotify(SurfaceIntentScope oldWidget) =>
+      oldWidget.intent != intent;
+}
+
 /// Publishes the active [EterRegister] to the whole tree. Installed once, at
 /// the root, from the profile's guidance mode.
 class EterRegisterScope extends InheritedWidget {

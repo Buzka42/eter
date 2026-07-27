@@ -66,112 +66,117 @@ class _VesselSectionState extends ConsumerState<VesselSection> {
     final lifePath = calculateLifePath(profile.dob);
     final lifePathCard = MajorArcana.forLifePath(lifePath);
     final zodiacCard = MajorArcana.forZodiac(profile.zodiac);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        InkWell(
-          onTap: () => _toggle(profile),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: EterSpace.s8),
-            child: Row(
-              children: [
-                Expanded(child: Text('THE VESSEL', style: text.labelSmall)),
-                Icon(
-                  _expanded
-                      ? Icons.keyboard_arrow_up
-                      : Icons.keyboard_arrow_down,
-                  size: 18,
-                ),
-              ],
+    // The Vessel is a ritual moment, and declares so itself rather than
+    // relying on where it happens to be mounted (C10).
+    return SurfaceIntentScope(
+      intent: SurfaceIntent.ritual,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          InkWell(
+            onTap: () => _toggle(profile),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: EterSpace.s8),
+              child: Row(
+                children: [
+                  Expanded(child: Text('THE VESSEL', style: text.labelSmall)),
+                  Icon(
+                    _expanded
+                        ? Icons.keyboard_arrow_up
+                        : Icons.keyboard_arrow_down,
+                    size: 18,
+                  ),
+                ],
+              ),
             ),
           ),
-        ),
-        AnimatedSize(
-          duration: const Duration(milliseconds: 320),
-          alignment: Alignment.topCenter,
-          child: !_expanded
-              ? const SizedBox.shrink()
-              : Column(
-                  children: [
-                    const SizedBox(height: EterSpace.s16),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _VesselCardSlot(
-                            background: 'assets/art/vessel/moon-$suffix.png',
-                            card: lifePathCard,
-                            eyebrow: 'LIFE PATH $lifePath',
+          AnimatedSize(
+            duration: const Duration(milliseconds: 320),
+            alignment: Alignment.topCenter,
+            child: !_expanded
+                ? const SizedBox.shrink()
+                : Column(
+                    children: [
+                      const SizedBox(height: EterSpace.s16),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _VesselCardSlot(
+                              background: 'assets/art/vessel/moon-$suffix.png',
+                              card: lifePathCard,
+                              eyebrow: 'LIFE PATH $lifePath',
+                            ),
                           ),
-                        ),
-                        const SizedBox(width: EterSpace.s12),
-                        Expanded(
-                          child: _VesselCardSlot(
-                            background: 'assets/art/vessel/sun-$suffix.png',
-                            card: zodiacCard,
-                            eyebrow:
-                                '${profile.zodiac.label.toUpperCase()} SUN',
+                          const SizedBox(width: EterSpace.s12),
+                          Expanded(
+                            child: _VesselCardSlot(
+                              background: 'assets/art/vessel/sun-$suffix.png',
+                              card: zodiacCard,
+                              eyebrow:
+                                  '${profile.zodiac.label.toUpperCase()} SUN',
+                            ),
                           ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: EterSpace.s16),
-                    if (!profile.hasCompleteBirthChartInput)
-                      _VesselPrompt(
-                        title: 'Your chart is waiting',
-                        message: 'Your birth time and place complete it.',
-                        actionLabel: widget.onOpenSanctum == null
-                            ? null
-                            : 'Add them in The Sanctum',
-                        onAction: widget.onOpenSanctum,
-                      )
-                    else if (_reading == null)
-                      const _VesselPrompt(
-                        title: 'Your two anchors',
-                        message:
-                            'Connect Aether to compose your saved interpretation.',
-                      )
-                    else
-                      FutureBuilder<VesselReading>(
-                        future: _reading,
-                        builder: (context, snapshot) {
-                          if (snapshot.hasError) {
-                            return Text(
-                              'The Vessel could not be composed yet.',
-                              style: text.bodyMedium,
-                            );
-                          }
-                          final reading = snapshot.data;
-                          if (reading == null) {
-                            return const Padding(
-                              padding: EdgeInsets.all(EterSpace.s24),
-                              child: CircularProgressIndicator(),
-                            );
-                          }
-                          return Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              for (final passage in reading.passages) ...[
-                                Text(passage.title, style: text.titleLarge),
-                                const SizedBox(height: EterSpace.s4),
-                                Text(passage.reading, style: text.bodyLarge),
-                                const SizedBox(height: EterSpace.s16),
-                              ],
-                              Text('SYNTHESIS', style: text.labelSmall),
-                              const SizedBox(height: EterSpace.s8),
-                              Text(
-                                reading.synthesis,
-                                style: text.bodyLarge?.copyWith(
-                                  fontStyle: FontStyle.italic,
-                                ),
-                              ),
-                            ],
-                          );
-                        },
+                        ],
                       ),
-                  ],
-                ),
-        ),
-      ],
+                      const SizedBox(height: EterSpace.s16),
+                      if (!profile.hasCompleteBirthChartInput)
+                        _VesselPrompt(
+                          title: 'Your chart is waiting',
+                          message: 'Your birth time and place complete it.',
+                          actionLabel: widget.onOpenSanctum == null
+                              ? null
+                              : 'Add them in The Sanctum',
+                          onAction: widget.onOpenSanctum,
+                        )
+                      else if (_reading == null)
+                        const _VesselPrompt(
+                          title: 'Your two anchors',
+                          message:
+                              'Connect Aether to compose your saved interpretation.',
+                        )
+                      else
+                        FutureBuilder<VesselReading>(
+                          future: _reading,
+                          builder: (context, snapshot) {
+                            if (snapshot.hasError) {
+                              return Text(
+                                'The Vessel could not be composed yet.',
+                                style: text.bodyMedium,
+                              );
+                            }
+                            final reading = snapshot.data;
+                            if (reading == null) {
+                              return const Padding(
+                                padding: EdgeInsets.all(EterSpace.s24),
+                                child: CircularProgressIndicator(),
+                              );
+                            }
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                for (final passage in reading.passages) ...[
+                                  Text(passage.title, style: text.titleLarge),
+                                  const SizedBox(height: EterSpace.s4),
+                                  Text(passage.reading, style: text.bodyLarge),
+                                  const SizedBox(height: EterSpace.s16),
+                                ],
+                                Text('SYNTHESIS', style: text.labelSmall),
+                                const SizedBox(height: EterSpace.s8),
+                                Text(
+                                  reading.synthesis,
+                                  style: text.bodyLarge?.copyWith(
+                                    fontStyle: FontStyle.italic,
+                                  ),
+                                ),
+                              ],
+                            );
+                          },
+                        ),
+                    ],
+                  ),
+          ),
+        ],
+      ),
     );
   }
 }

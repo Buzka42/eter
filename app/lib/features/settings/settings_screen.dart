@@ -9,6 +9,7 @@ import '../../core/db/app_database.dart';
 import '../../core/health/health_hub.dart';
 import '../../core/health/health_providers.dart';
 import '../../core/profile.dart';
+import '../../core/register.dart';
 import '../../core/theme.dart';
 import '../../core/tokens.dart';
 import '../../core/widgets.dart';
@@ -42,260 +43,266 @@ class SettingsScreen extends ConsumerWidget {
         const <RememberedSensorRow>[];
     final patterns =
         ref.watch(_patternsProvider).value ?? const <PatternCandidateRow>[];
-    return SkyBackground(
-      child: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(
-              EterSpace.gutter, EterSpace.s24, EterSpace.gutter, EterSpace.s64),
-          children: [
-            _SettingsHeader(profile: profile),
-            const SizedBox(height: EterSpace.s32),
-            if (profile != null) ...[
-              const _SectionLabel('ARCANA'),
-              _SettingsPanel(
-                child: Row(
-                  children: [
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: Image.asset(
-                        profile.zodiac
-                            .cardAssetFor(Theme.of(context).brightness),
-                        width: 54,
-                        height: 80,
-                        fit: BoxFit.cover,
-                        filterQuality: FilterQuality.high,
-                      ),
-                    ),
-                    const SizedBox(width: EterSpace.s16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            '${profile.zodiac.arcana} · ${profile.zodiac.numeral}',
-                            style: Theme.of(context).textTheme.titleLarge,
-                          ),
-                          const SizedBox(height: 4),
-                          // The resting figure used to be repeated here and in
-                          // the Body weight row on the same screen (§5.13). It
-                          // is a measurement, not an identity, so it lives with
-                          // the body — this card carries the arcana alone.
-                          Text(
-                            profile.zodiac.label,
-                            style: Theme.of(context).textTheme.bodyMedium,
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: EterSpace.s12),
-                    ElementMedallion(profile.zodiac.element, size: 40),
-                  ],
-                ),
-              ),
-              const SizedBox(height: EterSpace.s24),
-              const _SectionLabel('MEASUREMENTS'),
-              _SettingsPanel(
-                child: Column(
-                  children: [
-                    ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      title: const Text('Body weight'),
-                      subtitle: Text(
-                        '${profile.weightKg.toStringAsFixed(1)} kg · '
-                        '${profile.rmr.round()} resting kcal'
-                        '${profile.rmrIsApproximate ? ' (estimated)' : ''}',
-                      ),
-                      trailing: IconButton(
-                        icon: const Icon(Icons.add),
-                        onPressed: () => _addWeight(context, ref, profile),
-                      ),
-                    ),
-                    if (weights.length >= 2) ...[
-                      // An unlabelled trend line does not say what span it
-                      // covers (§5.13).
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: Text(
-                          'LAST 30 DAYS',
-                          style: Theme.of(context).textTheme.labelSmall,
+    // The Sanctum is settings — an instrument surface, plain at any register
+    // (C10).
+    return SurfaceIntentScope(
+      intent: SurfaceIntent.plain,
+      child: SkyBackground(
+        child: SafeArea(
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(EterSpace.gutter, EterSpace.s24,
+                EterSpace.gutter, EterSpace.s64),
+            children: [
+              _SettingsHeader(profile: profile),
+              const SizedBox(height: EterSpace.s32),
+              if (profile != null) ...[
+                const _SectionLabel('ARCANA'),
+                _SettingsPanel(
+                  child: Row(
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: Image.asset(
+                          profile.zodiac
+                              .cardAssetFor(Theme.of(context).brightness),
+                          width: 54,
+                          height: 80,
+                          fit: BoxFit.cover,
+                          filterQuality: FilterQuality.high,
                         ),
                       ),
-                      SizedBox(
-                        height: 72,
-                        width: double.infinity,
-                        child: CustomPaint(
-                          painter: _WeightSparkline(
-                            weights
-                                .take(30)
-                                .toList()
-                                .reversed
-                                .map((row) => row.kg)
-                                .toList(),
-                            // Not the element accent. A fire sign painted the
-                            // weight trend in salmon, which was both the
-                            // loudest colour in the app and a false alarm
-                            // signal on a line that means nothing good or bad.
-                            // Trend data is neutral instrument colour.
-                            color:
-                                Theme.of(context).brightness == Brightness.dark
-                                    ? EterColors.sky300
-                                    : EterColors.sky500,
-                          ),
+                      const SizedBox(width: EterSpace.s16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              '${profile.zodiac.arcana} · ${profile.zodiac.numeral}',
+                              style: Theme.of(context).textTheme.titleLarge,
+                            ),
+                            const SizedBox(height: 4),
+                            // The resting figure used to be repeated here and in
+                            // the Body weight row on the same screen (§5.13). It
+                            // is a measurement, not an identity, so it lives with
+                            // the body — this card carries the arcana alone.
+                            Text(
+                              profile.zodiac.label,
+                              style: Theme.of(context).textTheme.bodyMedium,
+                            ),
+                          ],
                         ),
                       ),
+                      const SizedBox(width: EterSpace.s12),
+                      ElementMedallion(profile.zodiac.element, size: 40),
                     ],
-                  ],
+                  ),
                 ),
-              ),
-              const SizedBox(height: EterSpace.s24),
-              const _SectionLabel('HEALTH SOURCES'),
-              _SettingsPanel(
-                child: Column(
-                  children: [
-                    ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      title: const Text('Sync health data'),
-                      subtitle: const Text('Health Connect · Apple Health'),
-                      trailing: const Icon(Icons.chevron_right),
-                      onTap: () => _syncHealth(context, ref),
-                    ),
-                    ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      title: const Text('Resync date range'),
-                      subtitle: const Text('Up to 30 days'),
-                      trailing: const Icon(Icons.chevron_right),
-                      onTap: () => _resyncRange(context, ref),
-                    ),
-                    ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      title: const Text('Pair a heart-rate sensor'),
-                      subtitle: const Text('Scan and connect nearby devices'),
-                      trailing: const Icon(Icons.chevron_right),
-                      onTap: () => showModalBottomSheet<void>(
-                        context: context,
-                        isScrollControlled: true,
-                        useSafeArea: true,
-                        builder: (context) => const FractionallySizedBox(
-                          heightFactor: .92,
-                          child: LiveScreen(),
-                        ),
-                      ),
-                    ),
-                    if (sensors.isNotEmpty) const Divider(height: 1),
-                    for (final sensor in sensors)
+                const SizedBox(height: EterSpace.s24),
+                const _SectionLabel('MEASUREMENTS'),
+                _SettingsPanel(
+                  child: Column(
+                    children: [
                       ListTile(
                         contentPadding: EdgeInsets.zero,
-                        title: Text(sensor.name),
-                        subtitle: Text(sensor.paired
-                            ? 'Paired heart-rate sensor'
-                            : 'Remembered heart-rate sensor'),
-                        trailing: TextButton(
-                          onPressed: () => _forgetSensor(context, ref, sensor),
-                          child: const Text('Forget'),
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: EterSpace.s24),
-              const _SectionLabel('EXPERIENCE'),
-              _SettingsPanel(
-                child: Column(children: [
-                  _ToggleRow(
-                    title: 'Haptic milestones',
-                    subtitle: 'A subtle pulse at progress thresholds',
-                    value: profile.hapticsEnabled,
-                    onChanged: (value) =>
-                        _update(ref, profile, hapticsEnabled: value),
-                  ),
-                  _ToggleRow(
-                    title: 'Nutrition tracking',
-                    subtitle: 'Show intake and balance details',
-                    value: profile.nutritionEnabled,
-                    onChanged: (value) =>
-                        _update(ref, profile, nutritionEnabled: value),
-                  ),
-                  _ToggleRow(
-                    title: 'Progress flash',
-                    subtitle: 'A brief visual milestone',
-                    value: profile.flashEnabled,
-                    onChanged: (value) =>
-                        _update(ref, profile, flashEnabled: value),
-                  ),
-                ]),
-              ),
-              const SizedBox(height: EterSpace.s24),
-              const _SectionLabel('AETHER'),
-              _SettingsPanel(
-                child: Column(
-                  children: [
-                    ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      title: const Text('Guidance style'),
-                      subtitle: Text(profile.guidanceMode.name),
-                      trailing: const Icon(Icons.chevron_right),
-                      onTap: () => _chooseGuidanceMode(
-                        context,
-                        ref,
-                        profile,
-                      ),
-                    ),
-                    const Divider(height: 1),
-                    if (patterns.isEmpty)
-                      const ListTile(
-                        contentPadding: EdgeInsets.zero,
-                        title: Text('Learned patterns'),
+                        title: const Text('Body weight'),
                         subtitle: Text(
-                          'Aether starts looking for inspectable patterns after seven days.',
+                          '${profile.weightKg.toStringAsFixed(1)} kg · '
+                          '${profile.rmr.round()} resting kcal'
+                          '${profile.rmrIsApproximate ? ' (estimated)' : ''}',
                         ),
-                      )
-                    else
-                      for (final pattern in patterns)
+                        trailing: IconButton(
+                          icon: const Icon(Icons.add),
+                          onPressed: () => _addWeight(context, ref, profile),
+                        ),
+                      ),
+                      if (weights.length >= 2) ...[
+                        // An unlabelled trend line does not say what span it
+                        // covers (§5.13).
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            'LAST 30 DAYS',
+                            style: Theme.of(context).textTheme.labelSmall,
+                          ),
+                        ),
+                        SizedBox(
+                          height: 72,
+                          width: double.infinity,
+                          child: CustomPaint(
+                            painter: _WeightSparkline(
+                              weights
+                                  .take(30)
+                                  .toList()
+                                  .reversed
+                                  .map((row) => row.kg)
+                                  .toList(),
+                              // Not the element accent. A fire sign painted the
+                              // weight trend in salmon, which was both the
+                              // loudest colour in the app and a false alarm
+                              // signal on a line that means nothing good or bad.
+                              // Trend data is neutral instrument colour.
+                              color: Theme.of(context).brightness ==
+                                      Brightness.dark
+                                  ? EterColors.sky300
+                                  : EterColors.sky500,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                const SizedBox(height: EterSpace.s24),
+                const _SectionLabel('HEALTH SOURCES'),
+                _SettingsPanel(
+                  child: Column(
+                    children: [
+                      ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        title: const Text('Sync health data'),
+                        subtitle: const Text('Health Connect · Apple Health'),
+                        trailing: const Icon(Icons.chevron_right),
+                        onTap: () => _syncHealth(context, ref),
+                      ),
+                      ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        title: const Text('Resync date range'),
+                        subtitle: const Text('Up to 30 days'),
+                        trailing: const Icon(Icons.chevron_right),
+                        onTap: () => _resyncRange(context, ref),
+                      ),
+                      ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        title: const Text('Pair a heart-rate sensor'),
+                        subtitle: const Text('Scan and connect nearby devices'),
+                        trailing: const Icon(Icons.chevron_right),
+                        onTap: () => showModalBottomSheet<void>(
+                          context: context,
+                          isScrollControlled: true,
+                          useSafeArea: true,
+                          builder: (context) => const FractionallySizedBox(
+                            heightFactor: .92,
+                            child: LiveScreen(),
+                          ),
+                        ),
+                      ),
+                      if (sensors.isNotEmpty) const Divider(height: 1),
+                      for (final sensor in sensors)
                         ListTile(
                           contentPadding: EdgeInsets.zero,
-                          title: Text(pattern.summary),
-                          subtitle: Text(
-                            'Association · ${(pattern.confidence * 100).round()}% confidence',
-                          ),
+                          title: Text(sensor.name),
+                          subtitle: Text(sensor.paired
+                              ? 'Paired heart-rate sensor'
+                              : 'Remembered heart-rate sensor'),
                           trailing: TextButton(
-                            onPressed: () => ref
-                                .read(databaseProvider)
-                                .setPatternStatus(pattern.key, 'dismissed'),
-                            child: const Text('Dismiss'),
+                            onPressed: () =>
+                                _forgetSensor(context, ref, sensor),
+                            child: const Text('Forget'),
                           ),
                         ),
-                    if (patterns.isNotEmpty)
-                      Align(
-                        alignment: Alignment.centerRight,
-                        child: TextButton(
-                          onPressed: () =>
-                              ref.read(databaseProvider).resetPatterns(),
-                          child: const Text('Reset personalization'),
-                        ),
-                      ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-              const SizedBox(height: EterSpace.s24),
-              const _SectionLabel('RECORDS'),
-              _SettingsPanel(
-                child: integrations.isEmpty
-                    ? const ListTile(
+                const SizedBox(height: EterSpace.s24),
+                const _SectionLabel('EXPERIENCE'),
+                _SettingsPanel(
+                  child: Column(children: [
+                    _ToggleRow(
+                      title: 'Haptic milestones',
+                      subtitle: 'A subtle pulse at progress thresholds',
+                      value: profile.hapticsEnabled,
+                      onChanged: (value) =>
+                          _update(ref, profile, hapticsEnabled: value),
+                    ),
+                    _ToggleRow(
+                      title: 'Nutrition tracking',
+                      subtitle: 'Show intake and balance details',
+                      value: profile.nutritionEnabled,
+                      onChanged: (value) =>
+                          _update(ref, profile, nutritionEnabled: value),
+                    ),
+                    _ToggleRow(
+                      title: 'Progress flash',
+                      subtitle: 'A brief visual milestone',
+                      value: profile.flashEnabled,
+                      onChanged: (value) =>
+                          _update(ref, profile, flashEnabled: value),
+                    ),
+                  ]),
+                ),
+                const SizedBox(height: EterSpace.s24),
+                const _SectionLabel('AETHER'),
+                _SettingsPanel(
+                  child: Column(
+                    children: [
+                      ListTile(
                         contentPadding: EdgeInsets.zero,
-                        title: Text('No health import yet'),
-                        subtitle: Text(
-                          'Sync once to inspect source and freshness.',
+                        title: const Text('Guidance style'),
+                        subtitle: Text(profile.guidanceMode.name),
+                        trailing: const Icon(Icons.chevron_right),
+                        onTap: () => _chooseGuidanceMode(
+                          context,
+                          ref,
+                          profile,
                         ),
-                      )
-                    : Column(
-                        children: [
-                          for (final source in integrations)
-                            _IntegrationDiagnostics(source: source),
-                        ],
                       ),
-              ),
+                      const Divider(height: 1),
+                      if (patterns.isEmpty)
+                        const ListTile(
+                          contentPadding: EdgeInsets.zero,
+                          title: Text('Learned patterns'),
+                          subtitle: Text(
+                            'Aether starts looking for inspectable patterns after seven days.',
+                          ),
+                        )
+                      else
+                        for (final pattern in patterns)
+                          ListTile(
+                            contentPadding: EdgeInsets.zero,
+                            title: Text(pattern.summary),
+                            subtitle: Text(
+                              'Association · ${(pattern.confidence * 100).round()}% confidence',
+                            ),
+                            trailing: TextButton(
+                              onPressed: () => ref
+                                  .read(databaseProvider)
+                                  .setPatternStatus(pattern.key, 'dismissed'),
+                              child: const Text('Dismiss'),
+                            ),
+                          ),
+                      if (patterns.isNotEmpty)
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: TextButton(
+                            onPressed: () =>
+                                ref.read(databaseProvider).resetPatterns(),
+                            child: const Text('Reset personalization'),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: EterSpace.s24),
+                const _SectionLabel('RECORDS'),
+                _SettingsPanel(
+                  child: integrations.isEmpty
+                      ? const ListTile(
+                          contentPadding: EdgeInsets.zero,
+                          title: Text('No health import yet'),
+                          subtitle: Text(
+                            'Sync once to inspect source and freshness.',
+                          ),
+                        )
+                      : Column(
+                          children: [
+                            for (final source in integrations)
+                              _IntegrationDiagnostics(source: source),
+                          ],
+                        ),
+                ),
+              ],
             ],
-          ],
+          ),
         ),
       ),
     );

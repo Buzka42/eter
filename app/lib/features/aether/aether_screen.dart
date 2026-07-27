@@ -442,8 +442,7 @@ class _GuidanceMoment extends ConsumerWidget {
           );
     // Two quantities, not three: at display size a third wrapped the line, and
     // steps already has a figure of its own on the dashboard (C1).
-    final stateLine =
-        '${intake.round()} eaten · ${burned.round()} burned';
+    final stateLine = '${intake.round()} eaten · ${burned.round()} burned';
     return Padding(
       padding: const EdgeInsets.fromLTRB(
           EterSpace.gutter, EterSpace.s16, EterSpace.gutter, EterSpace.s24),
@@ -696,117 +695,134 @@ class _Dashboard extends ConsumerWidget {
             now: ref.watch(nowProvider)(),
           );
 
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-          EterSpace.gutter, EterSpace.s32, EterSpace.gutter, EterSpace.s48),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const PulseBlock(),
-          const SizedBox(height: EterSpace.s32),
-          const JournalComposer(),
-          const SizedBox(height: EterSpace.s48),
-          _SectionHeader(label: 'The day in numbers', mystical: mystical),
-          const SizedBox(height: EterSpace.s24),
-          Row(
-            children: [
-              _Figure(
-                value: intake,
-                label: 'Eaten',
-                unit: 'kcal',
-              ),
-              _FigureDivider(mystical: mystical),
-              _Figure(
-                value: burned,
-                label: 'Burned',
-                unit: 'kcal',
-                // The element accent is a mystical signature, so grounded —
-                // which carries no ornament at all — must not paint one figure
-                // fire-orange among plain ink ones.
-                accent: register.showsOrnament
-                    ? element.accentFor(Theme.of(context).brightness)
-                    : null,
-              ),
-              _FigureDivider(mystical: mystical),
-              _Figure(
-                value: day.steps.toDouble(),
-                label: 'Steps',
-                unit: '',
-              ),
-            ],
-          ),
-          // The ring-gauge row was deleted (C1/A3): Active and Steps restated
-          // two of the three figures 32 px above, and the donut is the stock
-          // fitness-app component the aesthetic directive rules out.
-          // Figures, Scales and Timeline are one movement — the day's
-          // quantities — so they breathe at 24 (C3). The 48s are reserved for
-          // boundaries between movements.
-          const SizedBox(height: EterSpace.s24),
-          const ScalesSection(),
-          const SizedBox(height: EterSpace.s24),
-          const TimelineSparkline(),
-          if (patterns.isNotEmpty) ...[
+    // C10: the dashboard is instruments. Everything here is plain whatever the
+    // user's register, and the ritual moments below opt back in explicitly.
+    return SurfaceIntentScope(
+      intent: SurfaceIntent.plain,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(
+            EterSpace.gutter, EterSpace.s32, EterSpace.gutter, EterSpace.s48),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const PulseBlock(),
+            const SizedBox(height: EterSpace.s32),
+            const JournalComposer(),
             const SizedBox(height: EterSpace.s48),
-            _SectionHeader(
-                label: 'What Aether has noticed', mystical: mystical),
-            const SizedBox(height: EterSpace.s16),
-            for (final pattern in patterns.take(3))
-              Padding(
-                padding: const EdgeInsets.only(bottom: EterSpace.s16),
-                child: _PatternRow(pattern: pattern),
-              ),
-          ],
-          if (mystical && profile != null) ...[
-            const SizedBox(height: EterSpace.s48),
-            _SectionHeader(label: 'The wider sky', mystical: mystical),
-            const SizedBox(height: EterSpace.s16),
-            _WiderSky(profile: profile),
-          ],
-          if (mystical) ...[
-            const SizedBox(height: EterSpace.s48),
-            VesselSection(onOpenSanctum: onOpenFeatures),
-          ],
-          if (register.showsCompanionCard && profile != null) ...[
-            const SizedBox(height: EterSpace.s48),
-            _SectionHeader(
-                label: register.showsHeroCard
-                    ? 'The card for today'
-                    : 'Your companion card',
-                mystical: mystical),
+            _SectionHeader(label: 'The day in numbers'),
             const SizedBox(height: EterSpace.s24),
-            _CompanionCard(zodiac: profile.zodiac),
-          ],
-          const SizedBox(height: EterSpace.s48),
-          Center(
-            child: Wrap(
-              spacing: EterSpace.s24,
-              runSpacing: EterSpace.s8,
-              alignment: WrapAlignment.center,
+            Row(
               children: [
-                _GhostAction(label: 'Check in', onTap: onCheckIn),
-                _GhostAction(label: 'Settings', onTap: onOpenFeatures),
+                _Figure(
+                  value: intake,
+                  label: 'Eaten',
+                  unit: 'kcal',
+                ),
+                _FigureDivider(),
+                _Figure(
+                  value: burned,
+                  label: 'Burned',
+                  unit: 'kcal',
+                  // The element accent is a mystical signature, so it resolves
+                  // like every other ornament (C10). The figures are an
+                  // instrument, so no register paints one fire-orange among
+                  // plain ink ones.
+                  accent: showsOrnamentHere(context)
+                      ? element.accentFor(Theme.of(context).brightness)
+                      : null,
+                ),
+                _FigureDivider(),
+                _Figure(
+                  value: day.steps.toDouble(),
+                  label: 'Steps',
+                  unit: '',
+                ),
               ],
             ),
-          ),
-        ],
+            // The ring-gauge row was deleted (C1/A3): Active and Steps restated
+            // two of the three figures 32 px above, and the donut is the stock
+            // fitness-app component the aesthetic directive rules out.
+            // Figures, Scales and Timeline are one movement — the day's
+            // quantities — so they breathe at 24 (C3). The 48s are reserved for
+            // boundaries between movements.
+            const SizedBox(height: EterSpace.s24),
+            const ScalesSection(),
+            const SizedBox(height: EterSpace.s24),
+            const TimelineSparkline(),
+            if (patterns.isNotEmpty) ...[
+              const SizedBox(height: EterSpace.s48),
+              _SectionHeader(label: 'What Aether has noticed'),
+              const SizedBox(height: EterSpace.s16),
+              for (final pattern in patterns.take(3))
+                Padding(
+                  padding: const EdgeInsets.only(bottom: EterSpace.s16),
+                  child: _PatternRow(pattern: pattern),
+                ),
+            ],
+            // The moments. These declare ritual intent, so the register decides
+            // how far they go — and grounded still keeps them quiet.
+            SurfaceIntentScope(
+              intent: SurfaceIntent.ritual,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (mystical && profile != null) ...[
+                    const SizedBox(height: EterSpace.s48),
+                    const _SectionHeader(label: 'The wider sky'),
+                    const SizedBox(height: EterSpace.s16),
+                    _WiderSky(profile: profile),
+                  ],
+                  if (mystical) ...[
+                    const SizedBox(height: EterSpace.s48),
+                    VesselSection(onOpenSanctum: onOpenFeatures),
+                  ],
+                  if (register.showsCompanionCard && profile != null) ...[
+                    const SizedBox(height: EterSpace.s48),
+                    _SectionHeader(
+                        label: register.showsHeroCard
+                            ? 'The card for today'
+                            : 'Your companion card'),
+                    const SizedBox(height: EterSpace.s24),
+                    _CompanionCard(zodiac: profile.zodiac),
+                  ],
+                ],
+              ),
+            ),
+            const SizedBox(height: EterSpace.s48),
+            Center(
+              child: Wrap(
+                spacing: EterSpace.s24,
+                runSpacing: EterSpace.s8,
+                alignment: WrapAlignment.center,
+                children: [
+                  _GhostAction(label: 'Check in', onTap: onCheckIn),
+                  _GhostAction(label: 'Settings', onTap: onOpenFeatures),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 }
 
 class _SectionHeader extends StatelessWidget {
-  const _SectionHeader({required this.label, required this.mystical});
+  const _SectionHeader({required this.label});
 
   final String label;
-  final bool mystical;
 
   @override
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
     final night = Theme.of(context).brightness == Brightness.dark;
+    // C10: the register grants ornament, the surface decides whether it wants
+    // any. Instrument headers sit in a plain scope and stay unstarred even in
+    // the immersive register.
+    final ornament = showsOrnamentHere(context);
     return Row(
       children: [
-        if (mystical)
+        if (ornament)
           Padding(
             padding: const EdgeInsets.only(right: EterSpace.s12),
             child: StarOrnament(
@@ -879,9 +895,7 @@ class _Figure extends StatelessWidget {
 }
 
 class _FigureDivider extends StatelessWidget {
-  const _FigureDivider({required this.mystical});
-
-  final bool mystical;
+  const _FigureDivider();
 
   @override
   Widget build(BuildContext context) {
@@ -890,7 +904,7 @@ class _FigureDivider extends StatelessWidget {
       width: 1,
       height: 44,
       margin: const EdgeInsets.symmetric(horizontal: EterSpace.s16),
-      color: mystical
+      color: showsOrnamentHere(context)
           ? EterColors.aura500.withValues(alpha: night ? 0.3 : 0.22)
           : (night ? EterColors.night700 : EterColors.sky200),
     );
