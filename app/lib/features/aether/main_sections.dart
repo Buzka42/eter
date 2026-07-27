@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/instruments.dart';
 import '../../core/arcana/zodiac.dart';
 import '../../core/clock.dart';
+import '../../core/energy/energy.dart';
 import '../../core/profile.dart';
 import '../../core/tokens.dart';
 import '../../core/widgets.dart';
@@ -40,8 +41,11 @@ class ScalesSection extends ConsumerWidget {
     final day = ref.watch(dayStateProvider).value ?? DayState.initial;
     final intake = entries.fold<double>(0, (sum, row) => sum + row.kcal);
     final now = ref.watch(nowProvider)();
-    final burn = profile.restingKcalPerMin * (now.hour * 60 + now.minute) +
-        day.activeKcal;
+    final burn = burnedSoFarToday(
+      restingKcalPerMin: profile.restingKcalPerMin,
+      activeKcal: day.activeKcal,
+      now: now,
+    );
     final net = intake - burn;
     // The verdict branches on whether intake was logged at all, never on the
     // sign of net alone: with no entries "−828 kcal" only means the morning

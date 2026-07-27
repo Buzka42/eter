@@ -11,7 +11,9 @@ import '../../core/aether/lifestyle.dart';
 import '../../core/aether/pattern_engine.dart';
 import '../../core/arcana/animated_arcana_card.dart';
 import '../../core/arcana/zodiac.dart';
+import '../../core/clock.dart';
 import '../../core/db/app_database.dart';
+import '../../core/energy/energy.dart';
 import '../../core/profile.dart';
 import '../../core/register.dart';
 import '../../core/symbolic/natal_chart.dart';
@@ -389,9 +391,13 @@ class _GuidanceExperienceState extends State<_GuidanceExperience> {
   }
 }
 
+/// The hour after which the morning reading stops leading the opening and is
+/// demoted in place beneath the day's state (Q1, decided 27 July 2026).
+const int _readingLeadsUntilHour = 11;
+
 /// The first viewport: date eyebrow, ornament, revealed guidance, source
 /// caption, and a single quiet invitation to descend. No visible chrome.
-class _GuidanceMoment extends StatelessWidget {
+class _GuidanceMoment extends ConsumerWidget {
   const _GuidanceMoment({
     required this.guidance,
     required this.visible,
@@ -409,12 +415,35 @@ class _GuidanceMoment extends StatelessWidget {
   final VoidCallback onDescend;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final text = Theme.of(context).textTheme;
     final night = Theme.of(context).brightness == Brightness.dark;
     final dateLine =
         DateFormat('EEEE, d MMMM').format(DateTime.now()).toUpperCase();
     final revealed = visible >= guidance.sentences.length;
+
+    // Q1: the morning reading leads on first view; once the day is properly
+    // under way the reading is no longer the most useful thing on the screen,
+    // so a one-line state summary takes the top slot and the reading moves
+    // beneath it. The trigger is the clock, not whether data has arrived — a
+    // day with nothing logged by 14:00 is exactly when the state line is worth
+    // reading.
+    final now = ref.watch(nowProvider)();
+    final demoted = now.hour >= _readingLeadsUntilHour;
+    final day = ref.watch(dayStateProvider).value ?? DayState.initial;
+    final intake = ref.watch(_intakeTodayProvider).value ?? 0;
+    final profile = ref.watch(profileProvider);
+    final burned = profile == null
+        ? day.activeKcal
+        : burnedSoFarToday(
+            restingKcalPerMin: profile.restingKcalPerMin,
+            activeKcal: day.activeKcal,
+            now: now,
+          );
+    // Two quantities, not three: at display size a third wrapped the line, and
+    // steps already has a figure of its own on the dashboard (C1).
+    final stateLine =
+        '${intake.round()} eaten · ${burned.round()} burned';
     return Padding(
       padding: const EdgeInsets.fromLTRB(
           EterSpace.gutter, EterSpace.s16, EterSpace.gutter, EterSpace.s24),
@@ -442,7 +471,12 @@ class _GuidanceMoment extends StatelessWidget {
               _GhostMenuButton(onPressed: onOpenFeatures),
             ],
           ),
-          const Spacer(flex: 3),
+          if (demoted) ...[
+            const SizedBox(height: EterSpace.s32),
+            Text(stateLine, style: text.displaySmall?.copyWith(height: 1.3)),
+            const SizedBox(height: EterSpace.s32),
+          ] else
+            const Spacer(flex: 3),
           if (mystical) ...[
             const OrnamentDivider(),
             const SizedBox(height: EterSpace.s32),
@@ -470,9 +504,14 @@ class _GuidanceMoment extends StatelessWidget {
                           padding: const EdgeInsets.only(bottom: EterSpace.s24),
                           child: Text(
                             guidance.sentences[i],
-                            style: (i == 0
-                                    ? text.displaySmall
-                                    : text.headlineSmall)
+                            // Demoted, the reading is no longer the hero: it
+                            // steps down a size so the state line above it
+                            // leads.
+                            style: (demoted
+                                    ? text.bodyLarge
+                                    : i == 0
+                                        ? text.displaySmall
+                                        : text.headlineSmall)
                                 ?.copyWith(height: 1.42),
                           ),
                         ),
@@ -491,7 +530,11 @@ class _GuidanceMoment extends StatelessWidget {
                 onPressed: onReveal,
               ),
             ),
-          const Spacer(flex: 4),
+          // Was flex 4 against the 3 above, which pinned the footer to the
+          // bottom of the viewport and left the prose stranded in a void
+          // (§5.4). At 2 the block sits optically centred and the caption
+          // stays with what it captions.
+          const Spacer(flex: 2),
           Text(
             guidance.source == 'local'
                 ? 'Composed privately on this device'
@@ -643,6 +686,15 @@ class _Dashboard extends ConsumerWidget {
     final element = ref.watch(elementProvider);
     final mystical = mode != GuidanceMode.grounded;
     final register = EterRegister.of(context);
+    // Same definition as the Scales below, so "Burned" is one quantity on this
+    // scroll rather than two (C2).
+    final burned = profile == null
+        ? day.activeKcal
+        : burnedSoFarToday(
+            restingKcalPerMin: profile.restingKcalPerMin,
+            activeKcal: day.activeKcal,
+            now: ref.watch(nowProvider)(),
+          );
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(
@@ -665,7 +717,7 @@ class _Dashboard extends ConsumerWidget {
               ),
               _FigureDivider(mystical: mystical),
               _Figure(
-                value: day.activeKcal,
+                value: burned,
                 label: 'Burned',
                 unit: 'kcal',
                 // The element accent is a mystical signature, so grounded —

@@ -145,6 +145,7 @@ void main() {
     AppDatabase? database,
     bool seed = true,
     bool settle = false,
+    DateTime? now,
   }) async {
     // Mirrors app.dart: the register is installed at the root from the
     // profile's guidance mode, and every surface reads its ornament level
@@ -170,7 +171,7 @@ void main() {
               initialProfileProvider.overrideWithValue(profile),
               // Surfaces that derive figures from the time of day render
               // differently one minute later, so the atlas pins the clock.
-              nowProvider.overrideWithValue(() => todayAt14),
+              nowProvider.overrideWithValue(() => now ?? todayAt14),
             ],
             child: MaterialApp(
               debugShowCheckedModeBanner: false,
@@ -269,6 +270,19 @@ void main() {
       'aether_immersive',
       AetherScreen(onOpenFeatures: () {}),
       profile: fixtureProfile(mode: GuidanceMode.immersive),
+    );
+  });
+
+  // Q1 gives the opening two states. The fixtures above run at 14:00, where
+  // the reading is demoted beneath the day's state line; this one runs before
+  // the 11:00 threshold, where the reading still leads.
+  testWidgets('atlas: aether (morning)', (tester) async {
+    await capture(
+      tester,
+      'aether_morning',
+      AetherScreen(onOpenFeatures: () {}),
+      profile: fixtureProfile(mode: GuidanceMode.immersive),
+      now: DateTime(todayAt14.year, todayAt14.month, todayAt14.day, 8),
     );
   });
 

@@ -25,6 +25,19 @@ double rmrKcalPerDay({
 
 double rmrPerMin(double rmrPerDay) => rmrPerDay / 1440;
 
+/// Everything the body has spent so far today: resting burn accrued since
+/// midnight plus logged activity.
+///
+/// One definition on purpose. "Burned" used to mean activity alone on the
+/// dashboard figure and resting-plus-activity on the Scales, so the same word
+/// labelled 0 and 828 on a single scroll (§4 C2).
+double burnedSoFarToday({
+  required double restingKcalPerMin,
+  required double activeKcal,
+  required DateTime now,
+}) =>
+    restingKcalPerMin * (now.hour * 60 + now.minute) + activeKcal;
+
 // ---------------------------------------------------------------------------
 // Home burn state (spec 06)
 // ---------------------------------------------------------------------------
