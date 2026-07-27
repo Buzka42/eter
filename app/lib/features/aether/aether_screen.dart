@@ -315,8 +315,25 @@ class _GuidanceExperience extends StatefulWidget {
   State<_GuidanceExperience> createState() => _GuidanceExperienceState();
 }
 
+/// The movements of the single scroll, in order. The rail is a chapter index
+/// for them (§5.3): one hairline tick and one letterspaced initial each.
+enum _Movement {
+  opening('A', 'The opening'),
+  pulse('P', 'The Pulse'),
+  log('L', 'The Log'),
+  day('D', 'The day in numbers'),
+  vessel('V', 'The Vessel');
+
+  const _Movement(this.initial, this.label);
+  final String initial;
+  final String label;
+}
+
 class _GuidanceExperienceState extends State<_GuidanceExperience> {
   final _scroll = ScrollController();
+  final _movementKeys = {
+    for (final movement in _Movement.values) movement: GlobalKey(),
+  };
   Timer? _timer;
   int _visible = 0;
 
@@ -358,35 +375,181 @@ class _GuidanceExperienceState extends State<_GuidanceExperience> {
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
-      builder: (context, constraints) => SingleChildScrollView(
-        controller: _scroll,
-        physics: const ClampingScrollPhysics(),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+      builder: (context, constraints) => Stack(
+        children: [
+          SingleChildScrollView(
+            controller: _scroll,
+            physics: const ClampingScrollPhysics(),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                SizedBox(
+                  key: _movementKeys[_Movement.opening],
+                  height: constraints.maxHeight,
+                  child: _GuidanceMoment(
+                    guidance: widget.guidance,
+                    visible: _visible,
+                    mystical: _mystical,
+                    onReveal: () => setState(_showAll),
+                    onOpenFeatures: widget.onOpenFeatures,
+                    onDescend: () => _scroll.animateTo(
+                      constraints.maxHeight,
+                      duration: EterMotion.durReveal,
+                      curve: EterMotion.easeAir,
+                    ),
+                  ),
+                ),
+                _Dashboard(
+                  mode: widget.mode,
+                  onCheckIn: widget.onCheckIn,
+                  onOpenFeatures: widget.onOpenFeatures,
+                  movementKeys: _movementKeys,
+                ),
+              ],
+            ),
+          ),
+          Positioned(
+            top: 0,
+            bottom: 0,
+            right: 0,
+            child: _SectionRail(
+              scroll: _scroll,
+              keys: _movementKeys,
+              movements: [
+                for (final movement in _Movement.values)
+                  if (movement != _Movement.vessel || _mystical) movement,
+              ],
+              onJump: _jumpTo,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Scrolls a movement to the top of the viewport. The offsets are read from
+  /// the live render tree rather than tracked, so they stay correct as
+  /// sections change height (the Log expands, the Timeline unfolds).
+  void _jumpTo(_Movement movement) {
+    final context = _movementKeys[movement]?.currentContext;
+    if (context == null) return;
+    final box = context.findRenderObject() as RenderBox?;
+    if (box == null) return;
+    final target = _scroll.offset +
+        box.localToGlobal(Offset.zero).dy -
+        MediaQuery.paddingOf(this.context).top;
+    _scroll.animateTo(
+      target.clamp(0.0, _scroll.position.maxScrollExtent),
+      duration: EterMotion.durStandard,
+      curve: EterMotion.easeAir,
+    );
+  }
+}
+
+/// A chapter index for the single scroll, not a tab bar: a hairline tick and
+/// a letterspaced initial per movement at the right margin, the current one
+/// gold. It answers "fast access" without fragmenting the surface (§5.3).
+///
+/// It lives inside the 24 px gutter so it never sits over content. That caps
+/// each target at 24 px wide — under the 48 px guidance — so the rows are
+/// given the full 48 px of height to compensate, and every movement stays
+/// reachable by scrolling regardless.
+class _SectionRail extends StatefulWidget {
+  const _SectionRail({
+    required this.scroll,
+    required this.keys,
+    required this.movements,
+    required this.onJump,
+  });
+
+  final ScrollController scroll;
+  final Map<_Movement, GlobalKey> keys;
+
+  /// Passed in rather than derived from which keys happen to be mounted: on
+  /// the first build nothing below the fold has been laid out yet, so the
+  /// rail would show only the movements it could already see.
+  final List<_Movement> movements;
+  final void Function(_Movement) onJump;
+
+  @override
+  State<_SectionRail> createState() => _SectionRailState();
+}
+
+class _SectionRailState extends State<_SectionRail> {
+  @override
+  void initState() {
+    super.initState();
+    // Offsets are unknown until the first layout completes; without this the
+    // rail cannot tell which movement is at the top until the user scrolls.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) setState(() {});
+    });
+  }
+
+  /// The movement occupying the top of the viewport: the last one whose top
+  /// edge has passed the fold.
+  _Movement? _active(BuildContext context) {
+    const fold = 140.0;
+    _Movement? current;
+    for (final movement in widget.movements) {
+      final target = widget.keys[movement]?.currentContext;
+      if (target == null) continue;
+      final box = target.findRenderObject() as RenderBox?;
+      if (box == null || !box.hasSize) continue;
+      if (box.localToGlobal(Offset.zero).dy <= fold) current = movement;
+    }
+    return current;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final ink = EterInk.of(context);
+    final text = Theme.of(context).textTheme;
+    final gold = Theme.of(context).brightness == Brightness.dark
+        ? EterColors.aura300
+        : EterColors.aura700;
+    return AnimatedBuilder(
+      animation: widget.scroll,
+      builder: (context, _) {
+        final active = _active(context);
+        return Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
           children: [
-            SizedBox(
-              height: constraints.maxHeight,
-              child: _GuidanceMoment(
-                guidance: widget.guidance,
-                visible: _visible,
-                mystical: _mystical,
-                onReveal: () => setState(_showAll),
-                onOpenFeatures: widget.onOpenFeatures,
-                onDescend: () => _scroll.animateTo(
-                  constraints.maxHeight,
-                  duration: EterMotion.durReveal,
-                  curve: EterMotion.easeAir,
+            for (final movement in widget.movements)
+              Semantics(
+                button: true,
+                label: 'Jump to ${movement.label}',
+                child: InkWell(
+                  onTap: () => widget.onJump(movement),
+                  child: SizedBox(
+                    width: 24,
+                    height: 48,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          movement.initial,
+                          style: text.labelSmall?.copyWith(
+                            color: movement == active ? gold : ink.labelMuted,
+                            letterSpacing: 1.6,
+                          ),
+                        ),
+                        const SizedBox(height: EterSpace.s4),
+                        AnimatedContainer(
+                          duration: EterMotion.durMicro,
+                          width: movement == active ? 14 : 8,
+                          height: 1,
+                          color: movement == active ? gold : ink.line,
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ),
-            ),
-            _Dashboard(
-              mode: widget.mode,
-              onCheckIn: widget.onCheckIn,
-              onOpenFeatures: widget.onOpenFeatures,
-            ),
           ],
-        ),
-      ),
+        );
+      },
     );
   }
 }
@@ -670,11 +833,13 @@ class _Dashboard extends ConsumerWidget {
     required this.mode,
     required this.onCheckIn,
     required this.onOpenFeatures,
+    required this.movementKeys,
   });
 
   final GuidanceMode mode;
   final VoidCallback onCheckIn;
   final VoidCallback onOpenFeatures;
+  final Map<_Movement, GlobalKey> movementKeys;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -709,7 +874,10 @@ class _Dashboard extends ConsumerWidget {
             const SizedBox(height: EterSpace.s32),
             const JournalComposer(),
             const SizedBox(height: EterSpace.s48),
-            const _SectionHeader(label: 'The day in numbers'),
+            KeyedSubtree(
+              key: movementKeys[_Movement.day],
+              child: const _SectionHeader(label: 'The day in numbers'),
+            ),
             const SizedBox(height: EterSpace.s24),
             Row(
               children: [
