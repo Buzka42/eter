@@ -680,18 +680,36 @@ clean and 116 tests pass, including three new non-golden tests.
 
 ### Genuinely still open
 
-- **Correction of an extracted reading (the other half of Q6).** There is no
-  edit or delete path for a nutrition or activity row anywhere in the app.
-  This needs database methods that can reverse an applied extraction plus an
-  entry-level UI — a data-layer change, not a UI pass item, and one that
-  deletes user data, so it wants its own scoped work.
 - **Gold line-work on Day Sky** measures ~1.15:1. Decorative rather than
   informational, so not an AA failure, but close to invisible on a bright
   sky. Either commission the calmer Day Sky plate (§C8) or accept it
-  deliberately.
+  deliberately. **This is the one open item that needs a product decision.**
 - **Q4 Day Sky card loops** remain uncommissioned by decision, not oversight.
-- **Error-state goldens** for network-dependent surfaces (§5.14) are still
-  absent; only the Vessel has a visible failure path.
 - **5.6's foot-anchored persistent composer** was not attempted: it changes
   shell layout rather than the Log, and the discoverability problem it was
   meant to solve is addressed by the collapsed-state invitation.
+- **Per-item correction.** A wrong reading can now be rejected whole; editing
+  one line of it (changing 320 kcal to 260) still cannot be done. Whether
+  that is worth building depends on how often the classifier is nearly right
+  rather than wrong.
+
+---
+
+## 10. Closed after §9 — 27 July 2026
+
+- **Q6 is now fully answered.** The reading is shown *and* can be taken back.
+  No schema change was needed: nutrition rows already carried their
+  `journalEntryId`, activity buckets carry a derivable `sourceId`, and
+  lifestyle rows carry `source = 'journal'`. `JournalService.undo` reverts
+  those rows, rebuilds the winning minutes and the day total, and marks the
+  entry `discarded` so the retry loop cannot re-apply a rejected reading.
+  The prose is kept. `journal_undo_test` asserts a hand-logged meal survives.
+- **Failure states have goldens** (`log_failed`, `aether_offline`), and the
+  capture harness takes provider overrides. The offline golden immediately
+  caught a real bug: the provenance caption matched the source `'local'`
+  exactly, so while offline the screen claimed "Composed by Aether" about a
+  reading Aether never saw.
+- **`EngravedGauge` deleted**, along with `_GaugePainter` and
+  `eterSweepFor`, dead since the gauge row was removed.
+
+**State: `flutter analyze` clean, 120 tests pass, 24 golden surfaces.**
