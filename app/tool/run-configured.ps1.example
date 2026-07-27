@@ -1,0 +1,49 @@
+# Copy to run-configured.ps1 and fill in the four identifiers from
+#   Firebase console -> Project settings -> General
+#
+#   run-configured.ps1 is git-ignored. Never commit it.
+#
+# Usage:  ./tool/run-configured.ps1            (debug run on the attached device)
+#         ./tool/run-configured.ps1 -Release   (release APK)
+
+param(
+    [switch]$Release
+)
+
+$ErrorActionPreference = 'Stop'
+
+# --- Firebase identifiers -----------------------------------------------------
+$env:ETER_FIREBASE_API_KEY        = ''   # Web API Key
+$env:ETER_FIREBASE_PROJECT_ID     = ''   # Project ID
+$env:ETER_FIREBASE_SENDER_ID      = ''   # Project number
+$env:ETER_FIREBASE_ANDROID_APP_ID = ''   # 1:...:android:...
+
+foreach ($name in 'ETER_FIREBASE_API_KEY', 'ETER_FIREBASE_PROJECT_ID',
+                  'ETER_FIREBASE_SENDER_ID', 'ETER_FIREBASE_ANDROID_APP_ID') {
+    if (-not [Environment]::GetEnvironmentVariable($name)) {
+        throw "$name is empty. Fill it in from the Firebase console — the app " +
+              "silently falls back to offline guidance if any one is blank."
+    }
+}
+
+$defines = @(
+    "--dart-define=ETER_FIREBASE_API_KEY=$env:ETER_FIREBASE_API_KEY"
+    "--dart-define=ETER_FIREBASE_PROJECT_ID=$env:ETER_FIREBASE_PROJECT_ID"
+    "--dart-define=ETER_FIREBASE_SENDER_ID=$env:ETER_FIREBASE_SENDER_ID"
+    "--dart-define=ETER_FIREBASE_ANDROID_APP_ID=$env:ETER_FIREBASE_ANDROID_APP_ID"
+)
+
+# ETER_ALLOW_UNCONFIGURED_AUTH is deliberately left at its `true` default here.
+# Setting it false makes a missing login fail closed, which is correct for a
+# distributed build but only gets in the way while setting Firebase up.
+
+Push-Location $PSScriptRoot/..
+try {
+    if ($Release) {
+        flutter build apk --release @defines
+    } else {
+        flutter run @defines
+    }
+} finally {
+    Pop-Location
+}

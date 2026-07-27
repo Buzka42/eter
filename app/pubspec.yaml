@@ -1,0 +1,100 @@
+name: eter
+description: "Eter — precise calorie tracking, light as air."
+publish_to: "none"
+version: 0.2.0+5000
+
+# Dart 3.6+ / Flutter 3.27+ required (Color.withValues, record patterns).
+environment:
+  sdk: ">=3.6.0 <4.0.0"
+
+dependencies:
+  astronomia: ^1.0.0
+  cloud_firestore: ^6.7.1
+  cloud_functions: ^6.3.5
+  drift: ^2.34.1
+  firebase_auth: ^6.5.6
+  firebase_ai: ^3.14.1
+  firebase_app_check: ^0.4.5+2
+  firebase_core: ^4.12.1
+  flutter:
+    sdk: flutter
+  flutter_riverpod: ^2.5.1
+  geocoding: ^4.0.0
+  google_sign_in: ^7.2.0
+  go_router: ^14.2.0
+  health: ^13.3.1
+  intl: ^0.19.0
+  path: ^1.9.1
+  path_provider: ^2.1.6
+  permission_handler: ^12.0.1
+  sqlite3_flutter_libs: ^0.6.0+eol
+  speech_to_text: ^7.3.0
+  universal_ble: ^2.1.0
+  video_player: ^2.9.5
+  workmanager: ^0.9.0+3
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+  drift_dev: ^2.34.3
+  build_runner: ^2.15.1
+
+flutter:
+  uses-material-design: true
+  fonts:
+    - family: Marcellus
+      fonts:
+        - asset: assets/fonts/Marcellus-Regular.ttf
+    - family: Manrope
+      fonts:
+        - asset: assets/fonts/Manrope-Variable.ttf
+    - family: Cormorant Garamond
+      fonts:
+        - asset: assets/fonts/CormorantGaramond-Light.ttf
+          weight: 300
+        - asset: assets/fonts/CormorantGaramond-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/CormorantGaramond-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/CormorantGaramond-Italic.ttf
+          weight: 400
+          style: italic
+        - asset: assets/fonts/CormorantGaramond-MediumItalic.ttf
+          weight: 500
+          style: italic
+    - family: Inter
+      fonts:
+        - asset: assets/fonts/Inter-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/Inter-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/Inter-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/Inter-Bold.ttf
+          weight: 700
+        - asset: assets/fonts/Inter-ExtraBold.ttf
+          weight: 800
+  shaders:
+    - shaders/cloud.frag
+  assets:
+    # v2 static masters (STATIC_ASSET_REQUESTS.md). The v1 files stay in the
+    # repository, undeclared, until atlas sign-off.
+    - assets/art/bg-air-light-v5.webp
+    - assets/art/bg-air-dark-v3.webp
+    - assets/art/onboarding-hero.webp
+    - assets/art/elem-air.png
+    - assets/art/elem-fire.png
+    - assets/art/elem-water.png
+    - assets/art/elem-earth.png
+    - assets/art/empty-ledger.png
+    - assets/art/empty-timeline.png
+    - assets/art/empty-balance.png
+    - assets/art/grain-subtle.webp
+    - assets/art/card-back-v2-light.webp
+    - assets/art/card-back-v2-dark.webp
+    - assets/art/app-icon-air.webp
+    - assets/art/cloud-hero-cutout.png
+    - assets/art/vessel/
+    - assets/art/cards/
+    - assets/art/animations/

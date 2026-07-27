@@ -1,0 +1,20 @@
+# Release binaries and superseded builds — 2.4 GB, rebuildable from source.
+/archive/
+/artifacts/
+
+# Unshipped PNG art masters (141 MB). The app ships the derived .webp/.png
+# in app/assets/art; these originals are kept locally, not in history.
+/app/assets/art/masters/
+
+# Scratch: logs, working screenshots, one-off analysis notes.
+/tmp/
+/.tmp/
+/app/tmp/
+/app/.tmp/
+
+# Local agent/editor state.
+/.claude/settings.local.json
+
+# OS noise
+.DS_Store
+Thumbs.db

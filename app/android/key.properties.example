@@ -1,0 +1,5 @@
+# Copy to key.properties and keep the real values private.
+storePassword=replace-me
+keyPassword=replace-me
+keyAlias=eter-beta
+storeFile=eter-beta.jks
