@@ -6,13 +6,21 @@ import '../../core/aether/vessel.dart';
 import '../../core/aether/vessel_service.dart';
 import '../../core/arcana/animated_arcana_card.dart';
 import '../../core/arcana/major_arcana.dart';
+import '../../core/controls.dart';
 import '../../core/profile.dart';
 import '../../core/register.dart';
 import '../../core/tokens.dart';
 import 'journal_composer.dart';
 
 class VesselSection extends ConsumerStatefulWidget {
-  const VesselSection({super.key, this.initiallyExpanded = false});
+  const VesselSection({
+    super.key,
+    this.initiallyExpanded = false,
+    this.onOpenSanctum,
+  });
+
+  /// Lets the "add birth time and place" prompt actually go there.
+  final VoidCallback? onOpenSanctum;
 
   final bool initiallyExpanded;
 
@@ -108,10 +116,13 @@ class _VesselSectionState extends ConsumerState<VesselSection> {
                     ),
                     const SizedBox(height: EterSpace.s16),
                     if (!profile.hasCompleteBirthChartInput)
-                      const _VesselPrompt(
+                      _VesselPrompt(
                         title: 'Your chart is waiting',
-                        message:
-                            'Add birth time and place in The Sanctum to reveal it.',
+                        message: 'Your birth time and place complete it.',
+                        actionLabel: widget.onOpenSanctum == null
+                            ? null
+                            : 'Add them in The Sanctum',
+                        onAction: widget.onOpenSanctum,
                       )
                     else if (_reading == null)
                       const _VesselPrompt(
@@ -169,20 +180,32 @@ class _VesselPrompt extends StatelessWidget {
   const _VesselPrompt({
     required this.title,
     required this.message,
+    this.actionLabel,
+    this.onAction,
   });
 
   final String title;
   final String message;
 
+  /// A prompt that names a destination should be able to reach it (§5.10);
+  /// without these it is a dead end telling the user to go and find it.
+  final String? actionLabel;
+  final VoidCallback? onAction;
+
   @override
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
+    final actionLabel = this.actionLabel;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(title, style: text.titleLarge),
         const SizedBox(height: EterSpace.s4),
         Text(message, style: text.bodyMedium),
+        if (actionLabel != null && onAction != null) ...[
+          const SizedBox(height: EterSpace.s12),
+          EterAction(label: actionLabel, onPressed: onAction),
+        ],
       ],
     );
   }

@@ -712,7 +712,7 @@ class _Dashboard extends ConsumerWidget {
           ],
           if (mystical) ...[
             const SizedBox(height: EterSpace.s48),
-            const VesselSection(),
+            VesselSection(onOpenSanctum: onOpenFeatures),
           ],
           if (register.showsCompanionCard && profile != null) ...[
             const SizedBox(height: EterSpace.s48),
