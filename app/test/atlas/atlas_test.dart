@@ -1,5 +1,7 @@
 import 'package:drift/native.dart';
 import 'package:eter/core/aether/guidance_mode.dart';
+import 'package:eter/core/aether/ai_contract.dart';
+import 'package:eter/core/aether/journal.dart';
 import 'package:eter/core/arcana/animated_arcana_card.dart';
 import 'package:eter/core/arcana/zodiac.dart';
 import 'package:eter/core/arcana/zodiac.dart' as arcana;
@@ -306,7 +308,34 @@ void main() {
       'log_extracted',
       inGutter(const JournalComposer(
         initiallyExpanded: true,
-        initialMessage: 'Entry classified and added to today.',
+        initialMessage: 'Added to today.',
+        initialExtraction: JournalExtraction(
+          model: 'atlas-fixture',
+          schemaVersion: 1,
+          segments: [
+            FoodJournalSegment(
+              confidence: 0.9,
+              items: [
+                MealItemEstimate(
+                  name: 'Oats',
+                  portion: 'a bowl',
+                  kcal: 320,
+                  proteinG: 11,
+                  carbsG: 54,
+                  fatG: 6,
+                ),
+              ],
+            ),
+            ActivityJournalSegment(
+              name: 'Walk',
+              durationMinutes: 30,
+              intensity: 'easy',
+              activeKcal: 140,
+              confidence: 0.8,
+            ),
+            RatingJournalSegment(JournalSegmentKind.mood, value: 4),
+          ],
+        ),
       )),
       profile: fixtureProfile(),
     );

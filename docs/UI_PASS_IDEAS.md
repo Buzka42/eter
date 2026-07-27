@@ -612,3 +612,38 @@ using the 1st/5th-percentile-darkest pixel as the realistic worst case:
 - `EngravedGauge` (`instruments.dart`) is now unreferenced after C1/A3.
 - Tier 2 is untouched: 5.6 (Log as centre / extraction trust, the highest-value
   item per Q6), 5.3, 5.5+5.12, 5.4, 5.10+5.11, and C10's `SurfaceIntent`.
+
+### Tier 2 progress — 5.6, the Log
+
+The Q6 item ("the trust gap matters more than any visual change in this
+document") is now half shipped, and the half that shipped is the visible half.
+
+- **The reading is shown.** After submit the Log lists what the classifier
+  actually understood — `Oats · a bowl → 320 kcal`, `Walk · 30 min → 140 kcal`,
+  `Mood → 4/5` — under a `READ AS` rule, instead of asserting "Entry classified
+  and added to today." A wrong reading is now visible at the moment it is made
+  rather than discovered later in the day's totals.
+- **Discoverability.** Collapsed, the Log was a header over an empty screen. The
+  example prose now shows as a muted invitation and is itself the tap target, so
+  the app's primary verb is visible from the dashboard.
+- **Ghost text.** `labelText` floated above the field and hid the example behind
+  it; the example is now permanent `hintText`.
+- **The mic** is an `EterAction` with the word "Dictate" and the system's 52 px
+  target, not a bare glyph.
+- **Atlas.** `JournalComposer` gained an `initialExtraction` seam alongside the
+  existing `initialText`/`initialMessage`, so `log_extracted` captures the real
+  post-submit state rather than a message string.
+
+**Not shipped: correction.** There is currently no edit or delete path for a
+nutrition or activity row anywhere in the app — no `updateNutritionEntry`, no
+delete, no per-entry UI. Copy offering correction was written and then removed
+rather than ship a promise the app cannot honour. Making the reading correctable
+needs that edit path built first (database methods that can reverse an applied
+extraction, plus an entry-level UI), which is a data-layer change rather than a
+UI pass item.
+
+### Still open in Tier 2
+
+5.3 (fast-access rail), 5.5 + 5.12 (merge Pulse and Live), 5.4 (time-of-day
+opening per Q1), 5.10 + 5.11 (ritual moments), C10 (`SurfaceIntent` per Q3), and
+the persistent foot-anchored composer half of 5.6.
